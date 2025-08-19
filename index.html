@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tracciamento Spese - Marco & Vale</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
             margin: 0;
@@ -29,6 +30,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             padding: 15px;
             animation: slideUp 0.3s ease;
+            margin-bottom: 10px;
         }
 
         @keyframes slideUp {
@@ -54,6 +56,13 @@
             margin-bottom: 10px;
             font-size: 16px;
             margin-top: 15px;
+        }
+
+        h3 {
+            color: #666;
+            margin-bottom: 8px;
+            font-size: 14px;
+            margin-top: 10px;
         }
 
         .setup-notice {
@@ -164,7 +173,7 @@
 
         .input-row {
             display: grid;
-            grid-template-columns: 2fr 1fr;
+            grid-template-columns: 1fr 1fr;
             gap: 8px;
         }
 
@@ -223,6 +232,201 @@
             font-size: 16px;
             font-weight: bold;
             color: #667eea;
+        }
+
+        /* Sezione Filtri e Analisi */
+        .analytics-section {
+            margin-top: 15px;
+        }
+
+        .section-header {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .section-header:hover {
+            background: #e8e8e8;
+        }
+
+        .section-header h2 {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .toggle-icon {
+            transition: transform 0.3s;
+        }
+
+        .toggle-icon.open {
+            transform: rotate(180deg);
+        }
+
+        .collapsible-content {
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        .collapsible-content.open {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .filter-item {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 8px;
+        }
+
+        .filter-item label {
+            font-size: 12px;
+            color: #666;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .filter-item select {
+            padding: 6px;
+            font-size: 12px;
+        }
+
+        .category-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .category-chip {
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 15px;
+            padding: 4px 10px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .category-chip.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            height: 250px;
+            position: relative;
+        }
+
+        .chart-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .chart-btn {
+            font-size: 11px;
+            padding: 8px;
+        }
+
+        .comparison-section {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        .comparison-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .comparison-period {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 8px;
+        }
+
+        .comparison-period h4 {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .comparison-selects {
+            display: flex;
+            gap: 4px;
+        }
+
+        .comparison-selects select {
+            padding: 4px;
+            font-size: 11px;
+        }
+
+        .comparison-btn {
+            background: #4CAF50;
+            margin-top: 8px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-top: 2px;
         }
 
         .expense-list {
@@ -326,7 +530,14 @@
             padding: 8px;
         }
 
-        /* Scrollbar personalizzata per la lista spese */
+        .no-data-message {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+            font-size: 12px;
+        }
+
+        /* Scrollbar personalizzata */
         .expense-list::-webkit-scrollbar {
             width: 6px;
         }
@@ -339,10 +550,6 @@
         .expense-list::-webkit-scrollbar-thumb {
             background: #888;
             border-radius: 3px;
-        }
-
-        .expense-list::-webkit-scrollbar-thumb:hover {
-            background: #555;
         }
 
         /* Ottimizzazioni per schermi molto piccoli */
@@ -362,6 +569,10 @@
             
             .expense-amount {
                 font-size: 14px;
+            }
+
+            .chart-buttons {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -425,32 +636,220 @@
                     <button onclick="addExpense()" id="addBtn">+ AGGIUNGI SPESA</button>
                 </div>
 
-                <!-- Summary -->
+                <!-- Summary (Totale generale) -->
                 <div class="summary-card">
                     <div class="summary-grid">
                         <div class="summary-item">
-                            <div class="summary-label">Marco</div>
+                            <div class="summary-label">Marco (Totale)</div>
                             <div class="summary-value">€<span id="marcoTotal">0</span></div>
                         </div>
                         <div class="summary-item">
-                            <div class="summary-label">Vale</div>
+                            <div class="summary-label">Vale (Totale)</div>
                             <div class="summary-value">€<span id="valeTotal">0</span></div>
                         </div>
                     </div>
                     
                     <div class="balance-card">
-                        <div class="balance-label">Bilancio</div>
+                        <div class="balance-label">Bilancio Totale</div>
                         <div class="balance-value" id="balanceText">In pari</div>
                     </div>
                 </div>
 
+                <!-- Sezione Analisi e Filtri -->
+                <div class="analytics-section">
+                    <div class="section-header" onclick="toggleSection('analytics')">
+                        <h2>📊 Analisi e Filtri</h2>
+                        <span class="toggle-icon" id="analyticsToggle">▼</span>
+                    </div>
+                    
+                    <div id="analyticsContent" class="collapsible-content">
+                        <!-- Filtri temporali -->
+                        <div class="filter-grid">
+                            <div class="filter-item">
+                                <label>Anno</label>
+                                <select id="yearFilter" onchange="applyFilters()">
+                                    <option value="">Tutti</option>
+                                    <option value="2023">2023</option>
+                                    <option value="2024">2024</option>
+                                    <option value="2025">2025</option>
+                                    <option value="2026">2026</option>
+                                    <option value="2027">2027</option>
+                                    <option value="2028">2028</option>
+                                    <option value="2029">2029</option>
+                                    <option value="2030">2030</option>
+                                </select>
+                            </div>
+                            <div class="filter-item">
+                                <label>Mese</label>
+                                <select id="monthFilter" onchange="applyFilters()">
+                                    <option value="">Tutti</option>
+                                    <option value="01">Gennaio</option>
+                                    <option value="02">Febbraio</option>
+                                    <option value="03">Marzo</option>
+                                    <option value="04">Aprile</option>
+                                    <option value="05">Maggio</option>
+                                    <option value="06">Giugno</option>
+                                    <option value="07">Luglio</option>
+                                    <option value="08">Agosto</option>
+                                    <option value="09">Settembre</option>
+                                    <option value="10">Ottobre</option>
+                                    <option value="11">Novembre</option>
+                                    <option value="12">Dicembre</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Filtri categoria -->
+                        <h3>Categorie</h3>
+                        <div class="category-filters" id="categoryFilters">
+                            <span class="category-chip active" data-category="all" onclick="toggleCategory(this)">Tutte</span>
+                            <span class="category-chip active" data-category="Spesa" onclick="toggleCategory(this)">🛒 Spesa</span>
+                            <span class="category-chip active" data-category="Bollette" onclick="toggleCategory(this)">📄 Bollette</span>
+                            <span class="category-chip active" data-category="Affitto" onclick="toggleCategory(this)">🏠 Affitto</span>
+                            <span class="category-chip active" data-category="Casa" onclick="toggleCategory(this)">🔧 Casa</span>
+                            <span class="category-chip active" data-category="Shopping" onclick="toggleCategory(this)">🛍️ Shopping</span>
+                            <span class="category-chip active" data-category="Tempo libero" onclick="toggleCategory(this)">🎉 Tempo libero</span>
+                            <span class="category-chip active" data-category="Vacanze" onclick="toggleCategory(this)">✈️ Vacanze</span>
+                            <span class="category-chip active" data-category="Regali" onclick="toggleCategory(this)">🎁 Regali</span>
+                        </div>
+
+                        <!-- Statistiche filtrate -->
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-label">Spese Periodo</div>
+                                <div class="stat-value">€<span id="periodTotal">0</span></div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Media Giornaliera</div>
+                                <div class="stat-value">€<span id="dailyAvg">0</span></div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Marco (Periodo)</div>
+                                <div class="stat-value">€<span id="marcoPeriod">0</span></div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Vale (Periodo)</div>
+                                <div class="stat-value">€<span id="valePeriod">0</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Grafico principale -->
+                        <div class="chart-container">
+                            <canvas id="expenseChart"></canvas>
+                        </div>
+
+                        <!-- Tipo di grafico -->
+                        <div class="chart-buttons">
+                            <button class="chart-btn" onclick="changeChartType('pie')" style="background: #9C27B0;">
+                                🥧 Torta
+                            </button>
+                            <button class="chart-btn" onclick="changeChartType('bar')" style="background: #2196F3;">
+                                📊 Barre
+                            </button>
+                            <button class="chart-btn" onclick="changeChartType('line')" style="background: #4CAF50;">
+                                📈 Linea
+                            </button>
+                        </div>
+
+                        <!-- Sezione Confronto Periodi -->
+                        <div class="comparison-section">
+                            <h3>🔄 Confronta Periodi</h3>
+                            <div class="comparison-controls">
+                                <div class="comparison-period">
+                                    <h4>Periodo 1</h4>
+                                    <div class="comparison-selects">
+                                        <select id="compare1Year" style="flex: 1;">
+                                            <option value="">Anno</option>
+                                            <option value="2023">2023</option>
+                                            <option value="2024">2024</option>
+                                            <option value="2025">2025</option>
+                                            <option value="2026">2026</option>
+                                            <option value="2027">2027</option>
+                                            <option value="2028">2028</option>
+                                            <option value="2029">2029</option>
+                                            <option value="2030">2030</option>
+                                        </select>
+                                        <select id="compare1Month" style="flex: 1;">
+                                            <option value="">Mese</option>
+                                            <option value="all">Tutto l'anno</option>
+                                            <option value="01">Gen</option>
+                                            <option value="02">Feb</option>
+                                            <option value="03">Mar</option>
+                                            <option value="04">Apr</option>
+                                            <option value="05">Mag</option>
+                                            <option value="06">Giu</option>
+                                            <option value="07">Lug</option>
+                                            <option value="08">Ago</option>
+                                            <option value="09">Set</option>
+                                            <option value="10">Ott</option>
+                                            <option value="11">Nov</option>
+                                            <option value="12">Dic</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="comparison-period">
+                                    <h4>Periodo 2</h4>
+                                    <div class="comparison-selects">
+                                        <select id="compare2Year" style="flex: 1;">
+                                            <option value="">Anno</option>
+                                            <option value="2023">2023</option>
+                                            <option value="2024">2024</option>
+                                            <option value="2025">2025</option>
+                                            <option value="2026">2026</option>
+                                            <option value="2027">2027</option>
+                                            <option value="2028">2028</option>
+                                            <option value="2029">2029</option>
+                                            <option value="2030">2030</option>
+                                        </select>
+                                        <select id="compare2Month" style="flex: 1;">
+                                            <option value="">Mese</option>
+                                            <option value="all">Tutto l'anno</option>
+                                            <option value="01">Gen</option>
+                                            <option value="02">Feb</option>
+                                            <option value="03">Mar</option>
+                                            <option value="04">Apr</option>
+                                            <option value="05">Mag</option>
+                                            <option value="06">Giu</option>
+                                            <option value="07">Lug</option>
+                                            <option value="08">Ago</option>
+                                            <option value="09">Set</option>
+                                            <option value="10">Ott</option>
+                                            <option value="11">Nov</option>
+                                            <option value="12">Dic</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="comparison-btn" onclick="comparePeriodsChart()">
+                                CONFRONTA PERIODI
+                            </button>
+                            
+                            <!-- Grafico confronto -->
+                            <div class="chart-container" id="comparisonChartContainer" style="display: none; margin-top: 10px;">
+                                <canvas id="comparisonChart"></canvas>
+                            </div>
+
+                            <!-- Pulsanti tipo confronto -->
+                            <div class="chart-buttons" id="comparisonButtons" style="display: none; margin-top: 10px;">
+                                <button class="chart-btn" onclick="changeComparisonType('bar')" style="background: #FF5722;">
+                                    📊 Barre
+                                </button>
+                                <button class="chart-btn" onclick="changeComparisonType('line')" style="background: #00BCD4;">
+                                    📈 Linee
+                                </button>
+                                <button class="chart-btn" onclick="changeComparisonType('category')" style="background: #673AB7;">
+                                    🏷️ Categorie
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Expense List -->
-                <h2>📋 Ultime Spese</h2>
+                <h2>📋 Ultime Spese <span id="filteredCount" style="font-size: 12px; color: #999;"></span></h2>
                 <div class="expense-list">
                     <div id="expensesList">
-                        <div style="text-align: center; color: #999; padding: 20px;">
-                            Caricamento...
-                        </div>
+                        <div class="no-data-message">Caricamento...</div>
                     </div>
                 </div>
 
@@ -470,8 +869,14 @@
     <script>
         // App State
         let expenses = [];
+        let filteredExpenses = [];
         let selectedPayer = null;
         let SCRIPT_URL = localStorage.getItem('sheetsScriptUrl');
+        let activeCategories = new Set(['Spesa', 'Bollette', 'Affitto', 'Casa', 'Shopping', 'Tempo libero', 'Vacanze', 'Regali']);
+        let currentChart = null;
+        let currentChartType = 'pie';
+        let comparisonChart = null;
+        let currentComparisonType = 'bar';
 
         // Check if already configured
         window.onload = function() {
@@ -486,6 +891,623 @@
             setTodayDate();
         };
 
+        // Toggle section visibility
+        function toggleSection(section) {
+            const content = document.getElementById(section + 'Content');
+            const toggle = document.getElementById(section + 'Toggle');
+            
+            if (content.classList.contains('open')) {
+                content.classList.remove('open');
+                toggle.classList.remove('open');
+            } else {
+                content.classList.add('open');
+                toggle.classList.add('open');
+                if (section === 'analytics') {
+                    updateChart();
+                }
+            }
+        }
+
+        // Toggle category filter
+        function toggleCategory(chip) {
+            const category = chip.dataset.category;
+            
+            if (category === 'all') {
+                const allChips = document.querySelectorAll('.category-chip');
+                const shouldActivate = !chip.classList.contains('active');
+                
+                allChips.forEach(c => {
+                    if (shouldActivate) {
+                        c.classList.add('active');
+                        if (c.dataset.category !== 'all') {
+                            activeCategories.add(c.dataset.category);
+                        }
+                    } else {
+                        c.classList.remove('active');
+                        if (c.dataset.category !== 'all') {
+                            activeCategories.delete(c.dataset.category);
+                        }
+                    }
+                });
+            } else {
+                if (chip.classList.contains('active')) {
+                    chip.classList.remove('active');
+                    activeCategories.delete(category);
+                } else {
+                    chip.classList.add('active');
+                    activeCategories.add(category);
+                }
+                
+                const allChip = document.querySelector('[data-category="all"]');
+                if (activeCategories.size === 8) {
+                    allChip.classList.add('active');
+                } else {
+                    allChip.classList.remove('active');
+                }
+            }
+            
+            applyFilters();
+        }
+
+        // Apply filters
+        function applyFilters() {
+            const yearFilter = document.getElementById('yearFilter').value;
+            const monthFilter = document.getElementById('monthFilter').value;
+            
+            filteredExpenses = expenses.filter(expense => {
+                if (!activeCategories.has(expense.category)) {
+                    return false;
+                }
+                
+                if (yearFilter) {
+                    const expenseYear = expense.date.split('/')[2];
+                    if (expenseYear !== yearFilter) {
+                        return false;
+                    }
+                }
+                
+                if (monthFilter) {
+                    const expenseMonth = expense.date.split('/')[1];
+                    if (expenseMonth !== monthFilter) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            updateFilteredUI();
+            updateStats();
+            updateChart();
+        }
+
+        // Update statistics
+        function updateStats() {
+            const marcoFiltered = filteredExpenses
+                .filter(e => e.payer === 'Marco' && (!e.currency || e.currency === 'EUR'))
+                .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+            
+            const valeFiltered = filteredExpenses
+                .filter(e => e.payer === 'Vale' && (!e.currency || e.currency === 'EUR'))
+                .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+            
+            const totalFiltered = marcoFiltered + valeFiltered;
+            
+            let daysInPeriod = 30;
+            if (filteredExpenses.length > 0) {
+                const dates = filteredExpenses.map(e => {
+                    const parts = e.date.split('/');
+                    return new Date(parts[2], parts[1] - 1, parts[0]);
+                });
+                const minDate = new Date(Math.min(...dates));
+                const maxDate = new Date(Math.max(...dates));
+                daysInPeriod = Math.max(1, Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24)) + 1);
+            }
+            
+            const dailyAvg = totalFiltered / daysInPeriod;
+            
+            document.getElementById('periodTotal').textContent = 
+                totalFiltered % 1 === 0 ? totalFiltered.toFixed(0) : totalFiltered.toFixed(2);
+            document.getElementById('dailyAvg').textContent = 
+                dailyAvg % 1 === 0 ? dailyAvg.toFixed(0) : dailyAvg.toFixed(2);
+            document.getElementById('marcoPeriod').textContent = 
+                marcoFiltered % 1 === 0 ? marcoFiltered.toFixed(0) : marcoFiltered.toFixed(2);
+            document.getElementById('valePeriod').textContent = 
+                valeFiltered % 1 === 0 ? valeFiltered.toFixed(0) : valeFiltered.toFixed(2);
+        }
+
+        // Update chart
+        function updateChart() {
+            const ctx = document.getElementById('expenseChart');
+            if (!ctx) return;
+            
+            if (currentChart) {
+                currentChart.destroy();
+            }
+            
+            if (currentChartType === 'line') {
+                updateTimelineChart();
+            } else {
+                updateCategoryChart();
+            }
+        }
+
+        // Update category chart (pie or bar)
+        function updateCategoryChart() {
+            const ctx = document.getElementById('expenseChart');
+            
+            const categoryTotals = {};
+            filteredExpenses.forEach(expense => {
+                if (!expense.currency || expense.currency === 'EUR') {
+                    categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + parseFloat(expense.amount || 0);
+                }
+            });
+            
+            const labels = Object.keys(categoryTotals);
+            const data = Object.values(categoryTotals);
+            
+            if (labels.length === 0) {
+                ctx.style.display = 'none';
+                return;
+            }
+            
+            ctx.style.display = 'block';
+            
+            const colors = [
+                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+                '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
+            ];
+            
+            const config = {
+                type: currentChartType === 'pie' ? 'pie' : 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors.slice(0, labels.length),
+                        borderWidth: 1,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: currentChartType === 'pie' ? 'bottom' : 'none',
+                            labels: {
+                                padding: 10,
+                                font: { size: 10 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || context.parsed.y || 0;
+                                    const percentage = ((value / data.reduce((a, b) => a + b, 0)) * 100).toFixed(1);
+                                    return label + ': €' + value.toFixed(2) + ' (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    },
+                    scales: currentChartType === 'bar' ? {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { font: { size: 10 } }
+                        },
+                        x: {
+                            ticks: { font: { size: 10 } }
+                        }
+                    } : {}
+                }
+            };
+            
+            currentChart = new Chart(ctx, config);
+        }
+
+        // Update timeline chart
+        function updateTimelineChart() {
+            const ctx = document.getElementById('expenseChart');
+            
+            // Determina la granularità
+            const yearFilter = document.getElementById('yearFilter').value;
+            const monthFilter = document.getElementById('monthFilter').value;
+            
+            let granularity = 'monthly'; // default
+            if (monthFilter) {
+                granularity = 'daily';
+            } else if (!yearFilter) {
+                granularity = 'monthly';
+            }
+            
+            // Aggrega i dati per periodo
+            const timeData = {};
+            filteredExpenses.forEach(expense => {
+                if (!expense.currency || expense.currency === 'EUR') {
+                    const parts = expense.date.split('/');
+                    let key;
+                    
+                    if (granularity === 'daily') {
+                        key = expense.date;
+                    } else {
+                        key = `${parts[1]}/${parts[2]}`;
+                    }
+                    
+                    timeData[key] = (timeData[key] || 0) + parseFloat(expense.amount || 0);
+                }
+            });
+            
+            // Ordina le chiavi cronologicamente
+            const sortedKeys = Object.keys(timeData).sort((a, b) => {
+                const dateA = granularity === 'daily' 
+                    ? new Date(a.split('/').reverse().join('-'))
+                    : new Date(a.split('/').reverse().join('-') + '-01');
+                const dateB = granularity === 'daily'
+                    ? new Date(b.split('/').reverse().join('-'))
+                    : new Date(b.split('/').reverse().join('-') + '-01');
+                return dateA - dateB;
+            });
+            
+            const labels = sortedKeys;
+            const data = sortedKeys.map(key => timeData[key]);
+            
+            if (labels.length === 0) {
+                ctx.style.display = 'none';
+                return;
+            }
+            
+            ctx.style.display = 'block';
+            
+            const config = {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Spese Totali',
+                        data: data,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { font: { size: 10 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Totale: €' + context.parsed.y.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { font: { size: 10 } }
+                        },
+                        x: {
+                            ticks: { 
+                                font: { size: 10 },
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            };
+            
+            currentChart = new Chart(ctx, config);
+        }
+
+        // Compare periods chart
+        function comparePeriodsChart() {
+            const year1 = document.getElementById('compare1Year').value;
+            const month1 = document.getElementById('compare1Month').value;
+            const year2 = document.getElementById('compare2Year').value;
+            const month2 = document.getElementById('compare2Month').value;
+            
+            if (!year1 || !year2) {
+                alert('Seleziona entrambi gli anni per il confronto');
+                return;
+            }
+            
+            // Filtra i dati per i due periodi
+            const period1Expenses = expenses.filter(e => {
+                const parts = e.date.split('/');
+                if (parts[2] !== year1) return false;
+                if (month1 && month1 !== 'all' && parts[1] !== month1) return false;
+                return true;
+            });
+            
+            const period2Expenses = expenses.filter(e => {
+                const parts = e.date.split('/');
+                if (parts[2] !== year2) return false;
+                if (month2 && month2 !== 'all' && parts[1] !== month2) return false;
+                return true;
+            });
+            
+            // Mostra il grafico di confronto
+            document.getElementById('comparisonChartContainer').style.display = 'block';
+            document.getElementById('comparisonButtons').style.display = 'grid';
+            
+            updateComparisonChart(period1Expenses, period2Expenses, year1, month1, year2, month2);
+        }
+
+        // Update comparison chart
+        function updateComparisonChart(period1, period2, year1, month1, year2, month2) {
+            const ctx = document.getElementById('comparisonChart');
+            
+            if (comparisonChart) {
+                comparisonChart.destroy();
+            }
+            
+            const label1 = month1 && month1 !== 'all' ? `${getMonthName(month1)} ${year1}` : year1;
+            const label2 = month2 && month2 !== 'all' ? `${getMonthName(month2)} ${year2}` : year2;
+            
+            if (currentComparisonType === 'category') {
+                // Confronto per categoria
+                const categories = ['Spesa', 'Bollette', 'Affitto', 'Casa', 'Shopping', 'Tempo libero', 'Vacanze', 'Regali'];
+                
+                const data1 = categories.map(cat => {
+                    return period1
+                        .filter(e => e.category === cat && (!e.currency || e.currency === 'EUR'))
+                        .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+                });
+                
+                const data2 = categories.map(cat => {
+                    return period2
+                        .filter(e => e.category === cat && (!e.currency || e.currency === 'EUR'))
+                        .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+                });
+                
+                comparisonChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: categories,
+                        datasets: [
+                            {
+                                label: label1,
+                                data: data1,
+                                backgroundColor: 'rgba(102, 126, 234, 0.7)',
+                                borderColor: '#667eea',
+                                borderWidth: 1
+                            },
+                            {
+                                label: label2,
+                                data: data2,
+                                backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                                borderColor: '#ff6384',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                labels: { font: { size: 10 } }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { font: { size: 10 } }
+                            },
+                            x: {
+                                ticks: { 
+                                    font: { size: 10 },
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                // Confronto totali o timeline
+                const total1 = period1
+                    .filter(e => !e.currency || e.currency === 'EUR')
+                    .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+                
+                const total2 = period2
+                    .filter(e => !e.currency || e.currency === 'EUR')
+                    .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+                
+                if (currentComparisonType === 'bar') {
+                    comparisonChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: [label1, label2],
+                            datasets: [{
+                                label: 'Totale Spese',
+                                data: [total1, total2],
+                                backgroundColor: ['rgba(102, 126, 234, 0.7)', 'rgba(255, 99, 132, 0.7)'],
+                                borderColor: ['#667eea', '#ff6384'],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { font: { size: 10 } }
+                                },
+                                x: {
+                                    ticks: { font: { size: 10 } }
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    // Line comparison (timeline overlay)
+                    const timeData1 = {};
+                    const timeData2 = {};
+                    
+                    period1.forEach(e => {
+                        if (!e.currency || e.currency === 'EUR') {
+                            const key = e.date.split('/')[0]; // giorno del mese
+                            timeData1[key] = (timeData1[key] || 0) + parseFloat(e.amount || 0);
+                        }
+                    });
+                    
+                    period2.forEach(e => {
+                        if (!e.currency || e.currency === 'EUR') {
+                            const key = e.date.split('/')[0]; // giorno del mese
+                            timeData2[key] = (timeData2[key] || 0) + parseFloat(e.amount || 0);
+                        }
+                    });
+                    
+                    const allDays = [...new Set([...Object.keys(timeData1), ...Object.keys(timeData2)])].sort((a, b) => parseInt(a) - parseInt(b));
+                    
+                    comparisonChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: allDays,
+                            datasets: [
+                                {
+                                    label: label1,
+                                    data: allDays.map(day => timeData1[day] || 0),
+                                    borderColor: '#667eea',
+                                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                                    tension: 0.1
+                                },
+                                {
+                                    label: label2,
+                                    data: allDays.map(day => timeData2[day] || 0),
+                                    borderColor: '#ff6384',
+                                    backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                                    tension: 0.1
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    labels: { font: { size: 10 } }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { font: { size: 10 } }
+                                },
+                                x: {
+                                    ticks: { font: { size: 10 } }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        }
+
+        // Change chart type
+        function changeChartType(type) {
+            currentChartType = type;
+            updateChart();
+        }
+
+        // Change comparison type
+        function changeComparisonType(type) {
+            currentComparisonType = type;
+            comparePeriodsChart();
+        }
+
+        // Get month name
+        function getMonthName(month) {
+            const months = {
+                '01': 'Gennaio', '02': 'Febbraio', '03': 'Marzo', '04': 'Aprile',
+                '05': 'Maggio', '06': 'Giugno', '07': 'Luglio', '08': 'Agosto',
+                '09': 'Settembre', '10': 'Ottobre', '11': 'Novembre', '12': 'Dicembre'
+            };
+            return months[month] || month;
+        }
+
+        // Update filtered UI
+        function updateFilteredUI() {
+            const expensesList = document.getElementById('expensesList');
+            const countEl = document.getElementById('filteredCount');
+            
+            if (filteredExpenses.length < expenses.length) {
+                countEl.textContent = `(${filteredExpenses.length} di ${expenses.length})`;
+            } else {
+                countEl.textContent = '';
+            }
+            
+            expensesList.innerHTML = '';
+            
+            if (filteredExpenses.length === 0) {
+                expensesList.innerHTML = '<div class="no-data-message">Nessuna spesa con questi filtri</div>';
+                return;
+            }
+            
+            filteredExpenses.slice(0, 50).forEach(expense => {
+                const currencySymbols = { 'EUR': '€', 'USD': '$', 'GBP': '£' };
+                const currency = expense.currency || 'EUR';
+                const symbol = currencySymbols[currency] || '€';
+                
+                const item = document.createElement('div');
+                item.className = 'expense-item';
+                
+                const detailsDiv = document.createElement('div');
+                detailsDiv.className = 'expense-details';
+                
+                const descDiv = document.createElement('div');
+                descDiv.className = 'expense-description';
+                descDiv.textContent = expense.description;
+                
+                const metaDiv = document.createElement('div');
+                metaDiv.className = 'expense-meta';
+                const payerIcon = expense.payer === 'Marco' ? '👨' : '👩';
+                metaDiv.textContent = `${payerIcon} ${expense.category} • ${expense.date}`;
+                
+                detailsDiv.appendChild(descDiv);
+                detailsDiv.appendChild(metaDiv);
+                
+                const actionsDiv = document.createElement('div');
+                actionsDiv.style.display = 'flex';
+                actionsDiv.style.alignItems = 'center';
+                
+                const amountDiv = document.createElement('div');
+                amountDiv.className = 'expense-amount';
+                const amountValue = parseFloat(expense.amount || 0);
+                amountDiv.textContent = symbol + (amountValue % 1 === 0 ? amountValue.toFixed(0) : amountValue.toFixed(2));
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.textContent = '×';
+                deleteBtn.onclick = () => deleteExpense(expense.id);
+                
+                actionsDiv.appendChild(amountDiv);
+                actionsDiv.appendChild(deleteBtn);
+                
+                item.appendChild(detailsDiv);
+                item.appendChild(actionsDiv);
+                
+                expensesList.appendChild(item);
+            });
+        }
+
         // Imposta la data di oggi nel campo data
         function setTodayDate() {
             const today = new Date();
@@ -495,39 +1517,19 @@
             document.getElementById('expenseDate').value = `${dd}/${mm}/${yyyy}`;
         }
 
-        // Formatta e valida la data inserita
-        function formatDate(input) {
-            // Rimuovi tutti i caratteri non numerici
-            let value = input.replace(/\D/g, '');
-            
-            // Se l'utente ha inserito 8 cifre (GGMMAAAA)
-            if (value.length === 8) {
-                const dd = value.substring(0, 2);
-                const mm = value.substring(2, 4);
-                const yyyy = value.substring(4, 8);
-                return `${dd}/${mm}/${yyyy}`;
-            }
-            
-            // Altrimenti mantieni il formato inserito dall'utente
-            return input;
-        }
-
-        // Event listener per formattare la data mentre l'utente digita
+        // Event listener per formattare la data
         document.addEventListener('DOMContentLoaded', function() {
             const dateInput = document.getElementById('expenseDate');
             if (dateInput) {
                 dateInput.addEventListener('blur', function() {
-                    // Formatta la data quando l'utente esce dal campo
                     let formatted = this.value;
                     
-                    // Se contiene solo numeri e ha 8 caratteri, formatta come GG/MM/AAAA
                     if (/^\d{8}$/.test(formatted)) {
                         const dd = formatted.substring(0, 2);
                         const mm = formatted.substring(2, 4);
                         const yyyy = formatted.substring(4, 8);
                         this.value = `${dd}/${mm}/${yyyy}`;
                     }
-                    // Accetta anche formati con . o -
                     else if (formatted.includes('.') || formatted.includes('-')) {
                         this.value = formatted.replace(/[.-]/g, '/');
                     }
@@ -565,32 +1567,30 @@
             loadExpenses();
         }
 
-        // Load expenses from Google Sheets using JSONP
+        // Load expenses
         function loadExpenses() {
             if (!SCRIPT_URL) return;
             
             updateSyncStatus('Caricamento...', false);
             
-            // Crea un nome di callback unico
             const callbackName = 'callback_' + Math.floor(Math.random() * 1000000);
             
-            // Definisci la funzione di callback globale
             window[callbackName] = function(result) {
                 if (result.success) {
                     expenses = result.data || [];
+                    filteredExpenses = [...expenses];
                     updateUI();
+                    applyFilters();
                     updateSyncStatus('✅ Sincronizzato', false);
                 } else {
                     updateSyncStatus('❌ Errore', true);
                 }
                 
-                // Cleanup
                 delete window[callbackName];
                 const script = document.getElementById(callbackName);
                 if (script) script.remove();
             };
             
-            // Crea e aggiungi il tag script per JSONP
             const script = document.createElement('script');
             script.id = callbackName;
             script.src = SCRIPT_URL + '?callback=' + callbackName;
@@ -643,7 +1643,6 @@
                 expenseDate = expenseDate.replace(/[.-]/g, '/');
             }
             
-            // Disable button during save
             document.getElementById('addBtn').disabled = true;
             updateSyncStatus('Salvataggio...', false);
             
@@ -668,9 +1667,9 @@
                     body: JSON.stringify(expense)
                 });
                 
-                // Aggiungi localmente e ricarica
                 expenses.unshift(expense);
                 updateUI();
+                applyFilters();
                 
                 // Reset form
                 document.getElementById('description').value = '';
@@ -679,12 +1678,10 @@
                 selectedPayer = null;
                 document.querySelectorAll('.payer-btn').forEach(btn => btn.classList.remove('active'));
                 
-                // Reimposta la data di oggi
                 setTodayDate();
                 
                 updateSyncStatus('✅ Aggiunto', false);
                 
-                // Ricarica i dati dopo 1 secondo per sincronizzare
                 setTimeout(loadExpenses, 1000);
                 
             } catch (error) {
@@ -710,12 +1707,11 @@
                     body: JSON.stringify({ action: 'delete', id: id })
                 });
                 
-                // Rimuovi localmente
                 expenses = expenses.filter(e => e.id !== id);
                 updateUI();
+                applyFilters();
                 updateSyncStatus('✅ Eliminato', false);
                 
-                // Ricarica dopo 1 secondo
                 setTimeout(loadExpenses, 1000);
                 
             } catch (error) {
@@ -723,15 +1719,8 @@
             }
         }
 
-        // Update UI
+        // Update UI (totali generali)
         function updateUI() {
-            const currencySymbols = {
-                'EUR': '€',
-                'USD': '$',
-                'GBP': '£'
-            };
-            
-            // Calculate totals (solo EUR per semplicità)
             const marcoTotal = expenses
                 .filter(e => e.payer === 'Marco' && (!e.currency || e.currency === 'EUR'))
                 .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
@@ -740,7 +1729,7 @@
                 .filter(e => e.payer === 'Vale' && (!e.currency || e.currency === 'EUR'))
                 .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
             
-            // Update totals display - senza decimali se interi
+            // Update totals display
             document.getElementById('marcoTotal').textContent = 
                 marcoTotal % 1 === 0 ? marcoTotal.toFixed(0) : marcoTotal.toFixed(2);
             document.getElementById('valeTotal').textContent = 
@@ -762,61 +1751,6 @@
                 balanceText.textContent = `Marco deve €${diffDisplay}`;
                 balanceText.style.color = '#ff9800';
             }
-            
-            // Update expenses list
-            const expensesList = document.getElementById('expensesList');
-            expensesList.innerHTML = '';
-            
-            if (expenses.length === 0) {
-                expensesList.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Nessuna spesa</p>';
-                return;
-            }
-            
-            // Mostra le ultime 50 spese
-            expenses.slice(0, 50).forEach(expense => {
-                const currency = expense.currency || 'EUR';
-                const symbol = currencySymbols[currency] || '€';
-                
-                const item = document.createElement('div');
-                item.className = 'expense-item';
-                
-                const detailsDiv = document.createElement('div');
-                detailsDiv.className = 'expense-details';
-                
-                const descDiv = document.createElement('div');
-                descDiv.className = 'expense-description';
-                descDiv.textContent = expense.description;
-                
-                const metaDiv = document.createElement('div');
-                metaDiv.className = 'expense-meta';
-                const payerIcon = expense.payer === 'Marco' ? '👨' : '👩';
-                metaDiv.textContent = `${payerIcon} ${expense.category} • ${expense.date}`;
-                
-                detailsDiv.appendChild(descDiv);
-                detailsDiv.appendChild(metaDiv);
-                
-                const actionsDiv = document.createElement('div');
-                actionsDiv.style.display = 'flex';
-                actionsDiv.style.alignItems = 'center';
-                
-                const amountDiv = document.createElement('div');
-                amountDiv.className = 'expense-amount';
-                const amountValue = parseFloat(expense.amount || 0);
-                amountDiv.textContent = symbol + (amountValue % 1 === 0 ? amountValue.toFixed(0) : amountValue.toFixed(2));
-                
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'delete-btn';
-                deleteBtn.textContent = '×';
-                deleteBtn.onclick = () => deleteExpense(expense.id);
-                
-                actionsDiv.appendChild(amountDiv);
-                actionsDiv.appendChild(deleteBtn);
-                
-                item.appendChild(detailsDiv);
-                item.appendChild(actionsDiv);
-                
-                expensesList.appendChild(item);
-            });
         }
 
         // Update sync status
