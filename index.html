@@ -610,7 +610,7 @@
                 <div class="expense-form">
                     <input type="text" id="description" placeholder="Cosa hai comprato?" required>
                     
-                    <select id="category" required>
+                    <select id="category" required onchange="toggleSupermarketField()">
                         <option value="" disabled selected>Seleziona categoria</option>
                         <option value="Spesa">🛒 Spesa</option>
                         <option value="Bollette">📄 Bollette</option>
@@ -620,6 +620,15 @@
                         <option value="Tempo libero">🎉 Tempo libero</option>
                         <option value="Vacanze">✈️ Vacanze</option>
                         <option value="Regali">🎁 Regali</option>
+                    </select>
+                    
+                    <select id="supermarket" style="display: none;">
+                        <option value="" disabled selected>Seleziona supermercato</option>
+                        <option value="Martinelli">🏪 Martinelli</option>
+                        <option value="Esselunga">🛒 Esselunga</option>
+                        <option value="Migross">🏬 Migross</option>
+                        <option value="Aldi">🛍️ Aldi</option>
+                        <option value="Altro">📦 Altro</option>
                     </select>
                     
                     <input type="text" id="expenseDate" placeholder="Data (GG/MM/AAAA)" required>
@@ -890,6 +899,21 @@
             // Imposta la data di oggi come default
             setTodayDate();
         };
+
+        // Toggle supermarket field visibility
+        function toggleSupermarketField() {
+            const category = document.getElementById('category').value;
+            const supermarketField = document.getElementById('supermarket');
+            
+            if (category === 'Spesa') {
+                supermarketField.style.display = 'block';
+                supermarketField.required = true;
+            } else {
+                supermarketField.style.display = 'none';
+                supermarketField.required = false;
+                supermarketField.value = '';
+            }
+        }
 
         // Toggle section visibility
         function toggleSection(section) {
@@ -1622,6 +1646,7 @@
             const amount = document.getElementById('amount').value;
             const currency = document.getElementById('currency').value;
             let expenseDate = document.getElementById('expenseDate').value;
+            const supermarket = document.getElementById('supermarket').value;
             
             if (!selectedPayer) {
                 alert('Seleziona chi ha pagato!');
@@ -1630,6 +1655,12 @@
             
             if (!description || !category || !amount || !expenseDate) {
                 alert('Compila tutti i campi!');
+                return;
+            }
+            
+            // Verifica che il supermercato sia selezionato se la categoria è Spesa
+            if (category === 'Spesa' && !supermarket) {
+                alert('Seleziona il supermercato!');
                 return;
             }
             
@@ -1654,6 +1685,7 @@
                 category: category,
                 amount: parseFloat(amount),
                 currency: currency,
+                supermarket: supermarket || '',
                 action: 'add'
             };
             
@@ -1675,6 +1707,8 @@
                 document.getElementById('description').value = '';
                 document.getElementById('category').value = '';
                 document.getElementById('amount').value = '';
+                document.getElementById('supermarket').value = '';
+                document.getElementById('supermarket').style.display = 'none';
                 selectedPayer = null;
                 document.querySelectorAll('.payer-btn').forEach(btn => btn.classList.remove('active'));
                 
