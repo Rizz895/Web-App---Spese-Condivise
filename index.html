@@ -1703,129 +1703,157 @@
             });
         }
 
-        // Add expense
-        async function addExpense() {
-            const description = document.getElementById('description').value;
-            const category = document.getElementById('category').value;
-            const amount = document.getElementById('amount').value;
-            const currency = document.getElementById('currency').value;
-            let expenseDate = document.getElementById('expenseDate').value;
-            const supermarket = document.getElementById('supermarket').value;
-            const supplier = document.getElementById('supplier').value;
-            let billStartDate = document.getElementById('billStartDate').value;
-            let billEndDate = document.getElementById('billEndDate').value;
-            
-            if (!selectedPayer) {
-                alert('Seleziona chi ha pagato!');
-                return;
-            }
-            
-            if (!description || !category || !amount || !expenseDate) {
-                alert('Compila tutti i campi!');
-                return;
-            }
-            
-            if (category === 'Spesa' && !supermarket) {
-                alert('Seleziona il supermercato!');
-                return;
-            }
-            
-            if (category === 'Bollette') {
-                if (!supplier || !billStartDate || !billEndDate) {
-                    alert('Compila tutti i campi della bolletta!');
-                    return;
-                }
-            }
-            
-            // Formatta tutte le date
-            if (/^\d{8}$/.test(expenseDate)) {
-                const dd = expenseDate.substring(0, 2);
-                const mm = expenseDate.substring(2, 4);
-                const yyyy = expenseDate.substring(4, 8);
-                expenseDate = dd + '/' + mm + '/' + yyyy;
-            } else {
-                expenseDate = expenseDate.replace(/[.-]/g, '/');
-            }
-            
-            if (billStartDate) {
-                if (/^\d{8}$/.test(billStartDate)) {
-                    const dd = billStartDate.substring(0, 2);
-                    const mm = billStartDate.substring(2, 4);
-                    const yyyy = billStartDate.substring(4, 8);
-                    billStartDate = dd + '/' + mm + '/' + yyyy;
-                } else {
-                    billStartDate = billStartDate.replace(/[.-]/g, '/');
-                }
-            }
-            
-            if (billEndDate) {
-                if (/^\d{8}$/.test(billEndDate)) {
-                    const dd = billEndDate.substring(0, 2);
-                    const mm = billEndDate.substring(2, 4);
-                    const yyyy = billEndDate.substring(4, 8);
-                    billEndDate = dd + '/' + mm + '/' + yyyy;
-                } else {
-                    billEndDate = billEndDate.replace(/[.-]/g, '/');
-                }
-            }
-            
-            document.getElementById('addBtn').disabled = true;
-            updateSyncStatus('Salvataggio...', false);
-            
-            const expense = {
-                id: Date.now().toString(),
-                date: expenseDate,
-                payer: selectedPayer,
-                description: description,
-                category: category,
-                amount: parseFloat(amount),
-                currency: currency,
-                supermarket: supermarket || '',
-                supplier: supplier || '',
-                billStartDate: billStartDate || '',
-                billEndDate: billEndDate || '',
-                action: 'add'
-            };
-            
-            try {
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'text/plain',
-                    },
-                    body: JSON.stringify(expense)
-                });
-                
-                expenses.unshift(expense);
-                updateUI();
-                applyFilters();
-                
-                // Reset form
-                document.getElementById('description').value = '';
-                document.getElementById('category').value = '';
-                document.getElementById('amount').value = '';
-                document.getElementById('supermarket').value = '';
-                document.getElementById('supermarket').style.display = 'none';
-                document.getElementById('supplier').value = '';
-                document.getElementById('billStartDate').value = '';
-                document.getElementById('billEndDate').value = '';
-                document.getElementById('billFields').style.display = 'none';
-                selectedPayer = null;
-                document.querySelectorAll('.payer-btn').forEach(btn => btn.classList.remove('active'));
-                
-                setTodayDate();
-                
-                updateSyncStatus('✅ Aggiunto', false);
-                
-                setTimeout(loadExpenses, 1000);
-                
-            } catch (error) {
-                updateSyncStatus('❌ Errore', true);
-            } finally {
-                document.getElementById('addBtn').disabled = false;
-            }
+        // Add expense con versione di debugg
+
+async function addExpense() {
+    const description = document.getElementById('description').value;
+    const category = document.getElementById('category').value;
+    const amount = document.getElementById('amount').value;
+    const currency = document.getElementById('currency').value;
+    let expenseDate = document.getElementById('expenseDate').value;
+    const supermarket = document.getElementById('supermarket').value;
+    const supplier = document.getElementById('supplier').value;
+    let billStartDate = document.getElementById('billStartDate').value;
+    let billEndDate = document.getElementById('billEndDate').value;
+    
+    // DEBUG: Log tutti i valori letti
+    console.log('=== VALORI LETTI DAL FORM ===');
+    console.log('Categoria:', category);
+    console.log('Supermercato:', supermarket);
+    console.log('Supermercato display:', document.getElementById('supermarket').style.display);
+    console.log('Fornitore:', supplier);
+    console.log('Date bolletta:', billStartDate, billEndDate);
+    
+    if (!selectedPayer) {
+        alert('Seleziona chi ha pagato!');
+        return;
+    }
+    
+    if (!description || !category || !amount || !expenseDate) {
+        alert('Compila tutti i campi!');
+        return;
+    }
+    
+    if (category === 'Spesa' && !supermarket) {
+        alert('Seleziona il supermercato!');
+        return;
+    }
+    
+    if (category === 'Bollette') {
+        if (!supplier || !billStartDate || !billEndDate) {
+            alert('Compila tutti i campi della bolletta!');
+            return;
         }
+    }
+    
+    // Formatta tutte le date
+    if (/^\d{8}$/.test(expenseDate)) {
+        const dd = expenseDate.substring(0, 2);
+        const mm = expenseDate.substring(2, 4);
+        const yyyy = expenseDate.substring(4, 8);
+        expenseDate = dd + '/' + mm + '/' + yyyy;
+    } else {
+        expenseDate = expenseDate.replace(/[.-]/g, '/');
+    }
+    
+    if (billStartDate) {
+        if (/^\d{8}$/.test(billStartDate)) {
+            const dd = billStartDate.substring(0, 2);
+            const mm = billStartDate.substring(2, 4);
+            const yyyy = billStartDate.substring(4, 8);
+            billStartDate = dd + '/' + mm + '/' + yyyy;
+        } else {
+            billStartDate = billStartDate.replace(/[.-]/g, '/');
+        }
+    }
+    
+    if (billEndDate) {
+        if (/^\d{8}$/.test(billEndDate)) {
+            const dd = billEndDate.substring(0, 2);
+            const mm = billEndDate.substring(2, 4);
+            const yyyy = billEndDate.substring(4, 8);
+            billEndDate = dd + '/' + mm + '/' + yyyy;
+        } else {
+            billEndDate = billEndDate.replace(/[.-]/g, '/');
+        }
+    }
+    
+    document.getElementById('addBtn').disabled = true;
+    updateSyncStatus('Salvataggio...', false);
+    
+    const expense = {
+        id: Date.now().toString(),
+        date: expenseDate,
+        payer: selectedPayer,
+        description: description,
+        category: category,
+        amount: parseFloat(amount),
+        currency: currency,
+        supermarket: supermarket || '',  // Assicurati che sia sempre una stringa
+        supplier: supplier || '',
+        billStartDate: billStartDate || '',
+        billEndDate: billEndDate || '',
+        action: 'add'
+    };
+    
+    // DEBUG: Log l'oggetto che stiamo per inviare
+    console.log('=== OGGETTO DA INVIARE ===');
+    console.log(JSON.stringify(expense, null, 2));
+    
+    // DEBUG: Verifica specificamente il campo supermarket
+    console.log('Campo supermarket nell\'oggetto:', expense.supermarket);
+    
+    try {
+        const bodyToSend = JSON.stringify(expense);
+        
+        // DEBUG: Log del body effettivo
+        console.log('=== BODY DELLA REQUEST ===');
+        console.log(bodyToSend);
+        
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+                'Content-Type': 'text/plain',
+            },
+            body: bodyToSend
+        });
+        
+        // Nota: con mode: 'no-cors' non possiamo leggere la risposta
+        console.log('Request inviata con successo');
+        
+        expenses.unshift(expense);
+        updateUI();
+        applyFilters();
+        
+        // Reset form
+        document.getElementById('description').value = '';
+        document.getElementById('category').value = '';
+        document.getElementById('amount').value = '';
+        document.getElementById('supermarket').value = '';
+        document.getElementById('supermarket').style.display = 'none';
+        document.getElementById('supplier').value = '';
+        document.getElementById('billStartDate').value = '';
+        document.getElementById('billEndDate').value = '';
+        document.getElementById('billFields').style.display = 'none';
+        selectedPayer = null;
+        document.querySelectorAll('.payer-btn').forEach(btn => btn.classList.remove('active'));
+        
+        setTodayDate();
+        
+        updateSyncStatus('✅ Aggiunto', false);
+        
+        // DEBUG: Attendi prima di ricaricare per vedere i log
+        console.log('=== ATTESA PRIMA DEL RELOAD ===');
+        setTimeout(loadExpenses, 2000); // Aumentato a 2 secondi per debug
+        
+    } catch (error) {
+        console.error('ERRORE:', error);
+        updateSyncStatus('❌ Errore', true);
+    } finally {
+        document.getElementById('addBtn').disabled = false;
+    }
+}
 
         // Delete expense
         async function deleteExpense(id) {
