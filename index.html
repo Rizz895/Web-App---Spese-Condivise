@@ -645,7 +645,7 @@
             <div id="setupNotice" class="setup-notice">
                 <h3>⚙️ Configurazione</h3>
                 <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/.../exec" />
-                <button onclick="saveScriptUrl()">CONNETTI</button>
+                <button id="connectBtn">CONNETTI</button>
             </div>
 
             <!-- Main App -->
@@ -975,6 +975,33 @@
         let comparisonChart1 = null;
         let comparisonChart2 = null;
         let currentComparisonType = 'bar';
+
+                // Event listener per il bottone di connessione
+        document.addEventListener('DOMContentLoaded', function() {
+            const connectBtn = document.getElementById('connectBtn');
+            if (connectBtn) {
+                connectBtn.addEventListener('click', function() {
+                    const url = document.getElementById('scriptUrl').value.trim();
+                    if (!url) {
+                        alert('Inserisci l\'URL del Web App!');
+                        return;
+                    }
+                    
+                    if (!url.endsWith('/exec')) {
+                        alert('L\'URL deve terminare con /exec');
+                        return;
+                    }
+                    
+                    localStorage.setItem('sheetsScriptUrl', url);
+                    SCRIPT_URL = url;
+                    
+                    document.getElementById('setupNotice').style.display = 'none';
+                    document.getElementById('mainApp').style.display = 'block';
+                    
+                    loadExpenses();
+                });
+            }
+        });
 
         // Save Script URL
         function saveScriptUrl() {
