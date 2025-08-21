@@ -645,7 +645,7 @@
             <div id="setupNotice" class="setup-notice">
                 <h3>⚙️ Configurazione</h3>
                 <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/.../exec" />
-                <button id="connectBtn">CONNETTI</button>
+                <button onclick="saveScriptUrl()">CONNETTI</button>
             </div>
 
             <!-- Main App -->
@@ -683,7 +683,10 @@
                         <option value="Esselunga">🛒 Esselunga</option>
                         <option value="Migross">🏬 Migross</option>
                         <option value="Aldi">🛍️ Aldi</option>
-                        <option value="Altro">📦 Altro</option>
+                        <option value="Famila">🏪 Famila</option>
+                        <option value="Tosano">🏬 Tosano</option>
+                        <option value="Too Good to Go">📦 TooGoodToGo</option>
+                        <option value="Altro"> Altro</option>
                     </select>
                     
                     <!-- Campi Bollette (solo per Bollette) -->
@@ -702,7 +705,7 @@
                     <input type="text" id="expenseDate" placeholder="Data (GG/MM/AAAA)" required>
                     
                     <div class="input-row" style="grid-template-columns: 1fr 1fr;">
-                        <input type="number" id="amount" placeholder="Importo" step="1" min="0" required>
+                        <input type="number" id="amount" placeholder="Importo" step="0.01" min="0" required>
                         <select id="currency">
                             <option value="EUR">€ EUR</option>
                             <option value="USD">$ USD</option>
@@ -975,33 +978,6 @@
         let comparisonChart1 = null;
         let comparisonChart2 = null;
         let currentComparisonType = 'bar';
-
-                // Event listener per il bottone di connessione
-        document.addEventListener('DOMContentLoaded', function() {
-            const connectBtn = document.getElementById('connectBtn');
-            if (connectBtn) {
-                connectBtn.addEventListener('click', function() {
-                    const url = document.getElementById('scriptUrl').value.trim();
-                    if (!url) {
-                        alert('Inserisci l\'URL del Web App!');
-                        return;
-                    }
-                    
-                    if (!url.endsWith('/exec')) {
-                        alert('L\'URL deve terminare con /exec');
-                        return;
-                    }
-                    
-                    localStorage.setItem('sheetsScriptUrl', url);
-                    SCRIPT_URL = url;
-                    
-                    document.getElementById('setupNotice').style.display = 'none';
-                    document.getElementById('mainApp').style.display = 'block';
-                    
-                    loadExpenses();
-                });
-            }
-        });
 
         // Save Script URL
         function saveScriptUrl() {
@@ -1631,7 +1607,105 @@
                     });
                     
                     comparisonChart = new Chart(ctx, {
-                        type: 'bar',
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [
+                                {
+                                    label: label1,
+                                    data: allKeys.map(key => timeData1[key] || 0),
+                                    borderColor: '#667eea',
+                                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                                    tension: 0.1
+                                },
+                                {
+                                    label: label2,
+                                    data: allKeys.map(key => timeData2[key] || 0),
+                                    borderColor: '#ff6384',
+                                    backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                                    tension: 0.1
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    labels: { font: { size: 10 } }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { font: { size: 10 } }
+                                },
+                                x: {
+                                    ticks: { font: { size: 10 } }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        }
+
+        // Change chart type
+        function changeChartType(type) {
+            currentChartType = type;
+            updateChart();
+        }
+
+        // Change comparison type
+        function changeComparisonType(type) {
+            currentComparisonType = type;
+            comparePeriodsChart();
+        }
+
+        // Get month name
+        function getMonthName(month) {
+            const months = {
+                '01': 'Gennaio', '02': 'Febbraio', '03': 'Marzo', '04': 'Aprile',
+                '05': 'Maggio', '06': 'Giugno', '07': 'Luglio', '08': 'Agosto',
+                '09': 'Settembre', '10': 'Ottobre', '11': 'Novembre', '12': 'Dicembre'
+            };
+            return months[month] || month;
+        }
+
+        // Update filtered UI
+        function updateFilteredUI() {
+            const expensesList = document.getElementById('expensesList');
+            const countEl = document.getElementById('filteredCount');
+            const loadMoreContainer = document.getElementById('loadMoreContainer');
+            
+            // Update count
+            const showing = Math.min(displayedExpenses, filteredExpenses.length);
+            if (filteredExpenses.length > 0) {
+                countEl.textContent = '(' + showing + ' di ' + filteredExpenses.length + ')';
+            } else {
+                countEl.textContent = '';
+            }
+            
+            // Show/hide load more button
+            if (filteredExpenses.length > displayedExpenses) {
+                loadMoreContainer.style.display = 'block';
+            } else {
+                loadMoreContainer.style.display = 'none';
+            }
+            
+            expensesList.innerHTML = '';
+            
+            if (filteredExpenses.length === 0) {
+                expensesList.innerHTML = '<div class="no-data-message">Nessuna spesa con questi filtri</div>';
+                return;
+            }
+            
+            // Display only limited expenses
+            const expensesToShow = filteredExpenses.slice(0, displayedExpenses);
+            
+            expensesToShow.forEach(expense => {
+                const currencySymbols = { 'EUR': '€', 'USD': ' 'bar',
                         data: {
                             labels: categories,
                             datasets: [
@@ -1711,23 +1785,391 @@
                         : allKeys.map(k => 'Giorno ' + parseInt(k));
                     
                     comparisonChart = new Chart(ctx, {
-                        type: 'line',
+                        type:, 'GBP': '£' };
+                const currency = expense.currency || 'EUR';
+                const symbol = currencySymbols[currency] || '€';
+                
+                const item = document.createElement('div');
+                item.className = 'expense-item';
+                
+                const detailsDiv = document.createElement('div');
+                detailsDiv.className = 'expense-details';
+                
+                const descDiv = document.createElement('div');
+                descDiv.className = 'expense-description';
+                descDiv.textContent = expense.description;
+                
+                const metaDiv = document.createElement('div');
+                metaDiv.className = 'expense-meta';
+                const payerIcon = expense.payer === 'Marco' ? '👨' : '👩';
+                
+                let categoryText = expense.category;
+                if (expense.category === 'Spesa' && expense.supermarket) {
+                    categoryText = expense.category + ' (' + expense.supermarket + ')';
+                } else if (expense.category === 'Bollette' && expense.supplier) {
+                    categoryText = expense.category + ' (' + expense.supplier + ')';
+                    if (expense.billStartDate && expense.billEndDate) {
+                        categoryText += ' ' + expense.billStartDate + '-' + expense.billEndDate;
+                    }
+                }
+                
+                const dateStr = typeof expense.date === 'string' ? expense.date : formatDate(expense.date);
+                metaDiv.textContent = payerIcon + ' ' + categoryText + ' • ' + dateStr;
+                
+                detailsDiv.appendChild(descDiv);
+                detailsDiv.appendChild(metaDiv);
+                
+                const actionsDiv = document.createElement('div');
+                actionsDiv.style.display = 'flex';
+                actionsDiv.style.alignItems = 'center';
+                
+                const amountDiv = document.createElement('div');
+                amountDiv.className = 'expense-amount';
+                const amountValue = parseFloat(expense.amount || 0);
+                amountDiv.textContent = symbol + amountValue.toFixed(2);
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.textContent = '×';
+                deleteBtn.onclick = () => deleteExpense(expense.id);
+                
+                actionsDiv.appendChild(amountDiv);
+                actionsDiv.appendChild(deleteBtn);
+                
+                item.appendChild(detailsDiv);
+                item.appendChild(actionsDiv);
+                
+                expensesList.appendChild(item);
+            });
+        }
+
+        // Imposta la data di oggi nel campo data
+        function setTodayDate() {
+            const today = new Date();
+            const dd = String(today.getDate()).padStart(2, '0');
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const yyyy = today.getFullYear();
+            document.getElementById('expenseDate').value = dd + '/' + mm + '/' + yyyy;
+        }
+
+        // Reset form
+        function resetForm() {
+            document.getElementById('description').value = '';
+            document.getElementById('category').value = '';
+            document.getElementById('amount').value = '';
+            document.getElementById('supermarket').value = '';
+            document.getElementById('supermarket').style.display = 'none';
+            document.getElementById('supplier').value = '';
+            document.getElementById('billStartDate').value = '';
+            document.getElementById('billEndDate').value = '';
+            document.getElementById('billFields').style.display = 'none';
+            document.getElementById('currency').value = 'EUR';
+            selectedPayer = null;
+            document.querySelectorAll('.payer-btn').forEach(btn => btn.classList.remove('active'));
+            setTodayDate();
+        }
+
+        // Event listener per formattare la data
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateInput = document.getElementById('expenseDate');
+            if (dateInput) {
+                dateInput.addEventListener('blur', function() {
+                    formatDateInput(this);
+                });
+            }
+            
+            const billStartDate = document.getElementById('billStartDate');
+            if (billStartDate) {
+                billStartDate.addEventListener('blur', function() {
+                    formatDateInput(this);
+                });
+            }
+            
+            const billEndDate = document.getElementById('billEndDate');
+            if (billEndDate) {
+                billEndDate.addEventListener('blur', function() {
+                    formatDateInput(this);
+                });
+            }
+        });
+
+        // Change configuration
+        function changeConfig() {
+            if (confirm('Vuoi cambiare l\'URL di configurazione?')) {
+                localStorage.removeItem('sheetsScriptUrl');
+                location.reload();
+            }
+        }
+
+        // Load expenses
+        function loadExpenses() {
+            if (!SCRIPT_URL) return;
+            
+            updateSyncStatus('Caricamento...', false);
+            
+            const callbackName = 'callback_' + Math.floor(Math.random() * 1000000);
+            
+            window[callbackName] = function(result) {
+                if (result.success) {
+                    expenses = result.data || [];
+                    
+                    // Fix date format if needed
+                    expenses = expenses.map(e => {
+                        if (typeof e.date === 'object' && e.date !== null) {
+                            e.date = formatDate(e.date);
+                        }
+                        return e;
+                    });
+                    
+                    // Sort by date (newest first)
+                    expenses.sort((a, b) => {
+                        const dateA = parseDate(a.date);
+                        const dateB = parseDate(b.date);
+                        if (!dateA || !dateB) return 0;
+                        return dateB - dateA;
+                    });
+                    
+                    filteredExpenses = [...expenses];
+                    displayedExpenses = 20;
+                    updateUI();
+                    applyFilters();
+                    updateSyncStatus('✅ Sincronizzato', false);
+                } else {
+                    updateSyncStatus('❌ Errore', true);
+                }
+                
+                delete window[callbackName];
+                const script = document.getElementById(callbackName);
+                if (script) script.remove();
+            };
+            
+            const script = document.createElement('script');
+            script.id = callbackName;
+            script.src = SCRIPT_URL + '?callback=' + callbackName;
+            script.onerror = function() {
+                updateSyncStatus('❌ Errore connessione', true);
+                delete window[callbackName];
+                if (script) script.remove();
+            };
+            
+            document.body.appendChild(script);
+        }
+
+        // Select payer
+        function selectPayer(payer) {
+            selectedPayer = payer;
+            const buttons = document.querySelectorAll('.payer-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.includes(payer)) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        // Add expense
+        async function addExpense() {
+            const description = document.getElementById('description').value;
+            const category = document.getElementById('category').value;
+            const amount = document.getElementById('amount').value;
+            const currency = document.getElementById('currency').value;
+            let expenseDate = document.getElementById('expenseDate').value;
+            const supermarket = document.getElementById('supermarket').value;
+            const supplier = document.getElementById('supplier').value;
+            let billStartDate = document.getElementById('billStartDate').value;
+            let billEndDate = document.getElementById('billEndDate').value;
+            
+            if (!selectedPayer) {
+                alert('Seleziona chi ha pagato!');
+                return;
+            }
+            
+            if (!description || !category || !amount || !expenseDate) {
+                alert('Compila tutti i campi!');
+                return;
+            }
+            
+            if (category === 'Spesa' && !supermarket) {
+                alert('Seleziona il supermercato!');
+                return;
+            }
+            
+            if (category === 'Bollette') {
+                if (!supplier) {
+                    alert('Seleziona il fornitore!');
+                    return;
+                }
+            }
+            
+            // Formatta tutte le date
+            if (/^\d{8}$/.test(expenseDate)) {
+                const dd = expenseDate.substring(0, 2);
+                const mm = expenseDate.substring(2, 4);
+                const yyyy = expenseDate.substring(4, 8);
+                expenseDate = dd + '/' + mm + '/' + yyyy;
+            } else {
+                expenseDate = expenseDate.replace(/[.-]/g, '/');
+            }
+            
+            if (billStartDate) {
+                if (/^\d{8}$/.test(billStartDate)) {
+                    const dd = billStartDate.substring(0, 2);
+                    const mm = billStartDate.substring(2, 4);
+                    const yyyy = billStartDate.substring(4, 8);
+                    billStartDate = dd + '/' + mm + '/' + yyyy;
+                } else {
+                    billStartDate = billStartDate.replace(/[.-]/g, '/');
+                }
+            }
+            
+            if (billEndDate) {
+                if (/^\d{8}$/.test(billEndDate)) {
+                    const dd = billEndDate.substring(0, 2);
+                    const mm = billEndDate.substring(2, 4);
+                    const yyyy = billEndDate.substring(4, 8);
+                    billEndDate = dd + '/' + mm + '/' + yyyy;
+                } else {
+                    billEndDate = billEndDate.replace(/[.-]/g, '/');
+                }
+            }
+            
+            document.getElementById('addBtn').disabled = true;
+            updateSyncStatus('Salvataggio...', false);
+            
+            const expense = {
+                id: Date.now().toString(),
+                date: expenseDate,
+                payer: selectedPayer,
+                description: description,
+                category: category,
+                amount: parseFloat(amount),
+                currency: currency,
+                supermarket: supermarket || '',
+                supplier: supplier || '',
+                billStartDate: billStartDate || '',
+                billEndDate: billEndDate || '',
+                action: 'add'
+            };
+            
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'text/plain',
+                    },
+                    body: JSON.stringify(expense)
+                });
+                
+                // Add to local expenses
+                expenses.unshift(expense);
+                
+                // Update UI
+                updateUI();
+                applyFilters();
+                
+                // Reset form completely
+                resetForm();
+                
+                updateSyncStatus('✅ Aggiunto', false);
+                
+                // Reload after delay
+                setTimeout(loadExpenses, 1500);
+                
+            } catch (error) {
+                console.error('Errore:', error);
+                updateSyncStatus('❌ Errore', true);
+            } finally {
+                document.getElementById('addBtn').disabled = false;
+            }
+        }
+
+        // Delete expense
+        async function deleteExpense(id) {
+            if (!confirm('Eliminare?')) return;
+            
+            updateSyncStatus('Eliminazione...', false);
+            
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'text/plain',
+                    },
+                    body: JSON.stringify({ action: 'delete', id: id })
+                });
+                
+                expenses = expenses.filter(e => e.id !== id);
+                updateUI();
+                applyFilters();
+                updateSyncStatus('✅ Eliminato', false);
+                
+                setTimeout(loadExpenses, 1000);
+                
+            } catch (error) {
+                updateSyncStatus('❌ Errore', true);
+            }
+        }
+
+        // Update UI (totali generali)
+        function updateUI() {
+            const marcoTotal = expenses
+                .filter(e => e.payer === 'Marco' && (!e.currency || e.currency === 'EUR'))
+                .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+            
+            const valeTotal = expenses
+                .filter(e => e.payer === 'Vale' && (!e.currency || e.currency === 'EUR'))
+                .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+            
+            document.getElementById('marcoTotal').textContent = marcoTotal.toFixed(2);
+            document.getElementById('valeTotal').textContent = valeTotal.toFixed(2);
+            
+            const difference = Math.abs(marcoTotal - valeTotal) / 2;
+            const balanceText = document.getElementById('balanceText');
+            
+            if (Math.abs(marcoTotal - valeTotal) < 0.01) {
+                balanceText.textContent = '✅ In pari';
+                balanceText.style.color = '#4CAF50';
+            } else if (marcoTotal > valeTotal) {
+                balanceText.textContent = 'Vale deve €' + difference.toFixed(2);
+                balanceText.style.color = '#ff9800';
+            } else {
+                balanceText.textContent = 'Marco deve €' + difference.toFixed(2);
+                balanceText.style.color = '#ff9800';
+            }
+        }
+
+        // Update sync status
+        function updateSyncStatus(message, isError) {
+            const statusEl = document.getElementById('syncStatus');
+            statusEl.textContent = message;
+            statusEl.className = isError ? 'sync-status error' : 'sync-status';
+        }
+
+        // Auto-refresh ogni 60 secondi
+        if (SCRIPT_URL) {
+            setInterval(loadExpenses, 60000);
+        }
+    </script>
+</body>
+</html> 'bar',
                         data: {
-                            labels: labels,
+                            labels: categories,
                             datasets: [
                                 {
                                     label: label1,
-                                    data: allKeys.map(key => timeData1[key] || 0),
+                                    data: data1,
+                                    backgroundColor: 'rgba(102, 126, 234, 0.7)',
                                     borderColor: '#667eea',
-                                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                                    tension: 0.1
+                                    borderWidth: 1
                                 },
                                 {
                                     label: label2,
-                                    data: allKeys.map(key => timeData2[key] || 0),
+                                    data: data2,
+                                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
                                     borderColor: '#ff6384',
-                                    backgroundColor: 'rgba(255, 99, 132, 0.1)',
-                                    tension: 0.1
+                                    borderWidth: 1
                                 }
                             ]
                         },
@@ -1745,3 +2187,50 @@
                                     beginAtZero: true,
                                     ticks: { font: { size: 10 } }
                                 },
+                                x: {
+                                    ticks: { 
+                                        font: { size: 10 },
+                                        maxRotation: 45,
+                                        minRotation: 45
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    
+                } else {
+                    // Line chart - daily or monthly comparison
+                    const timeData1 = {};
+                    const timeData2 = {};
+                    
+                    const isMonthly = !month1 || month1 === 'all' || !month2 || month2 === 'all';
+                    
+                    period1.forEach(e => {
+                        if (!e.currency || e.currency === 'EUR') {
+                            const date = parseDate(e.date);
+                            if (!date) return;
+                            const key = isMonthly 
+                                ? String(date.getMonth() + 1).padStart(2, '0')
+                                : String(date.getDate()).padStart(2, '0');
+                            timeData1[key] = (timeData1[key] || 0) + parseFloat(e.amount || 0);
+                        }
+                    });
+                    
+                    period2.forEach(e => {
+                        if (!e.currency || e.currency === 'EUR') {
+                            const date = parseDate(e.date);
+                            if (!date) return;
+                            const key = isMonthly 
+                                ? String(date.getMonth() + 1).padStart(2, '0')
+                                : String(date.getDate()).padStart(2, '0');
+                            timeData2[key] = (timeData2[key] || 0) + parseFloat(e.amount || 0);
+                        }
+                    });
+                    
+                    const allKeys = [...new Set([...Object.keys(timeData1), ...Object.keys(timeData2)])].sort();
+                    const labels = isMonthly 
+                        ? allKeys.map(k => getMonthName(k))
+                        : allKeys.map(k => 'Giorno ' + parseInt(k));
+                    
+                    comparisonChart = new Chart(ctx, {
+                        type:
