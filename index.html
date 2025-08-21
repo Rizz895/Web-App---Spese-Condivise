@@ -330,6 +330,19 @@
             font-size: 12px;
         }
 
+        .filter-controls {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+
+        .reset-filters-btn {
+            background: #ff5722;
+            font-size: 11px;
+            padding: 6px 12px;
+            width: auto;
+        }
+
         .category-filters {
             display: flex;
             flex-wrap: wrap;
@@ -417,6 +430,20 @@
             margin-top: 8px;
         }
 
+        .comparison-charts-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .comparison-chart-single {
+            flex: 1;
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            height: 250px;
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -448,7 +475,7 @@
 
         .expense-list {
             margin-top: 15px;
-            max-height: 300px;
+            max-height: 400px;
             overflow-y: auto;
         }
 
@@ -511,6 +538,19 @@
 
         .delete-btn:active {
             transform: scale(0.9);
+        }
+
+        .load-more-container {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .load-more-btn {
+            background: #9C27B0;
+            font-size: 12px;
+            padding: 8px 20px;
+            width: auto;
+            display: inline-block;
         }
 
         .sync-status {
@@ -643,10 +683,7 @@
                         <option value="Esselunga">🛒 Esselunga</option>
                         <option value="Migross">🏬 Migross</option>
                         <option value="Aldi">🛍️ Aldi</option>
-                        <option value="Famila">ℹ️ Famila</option>
-                        <option value="Tosano">™️  Tosano</option>
-                        <option value="Too Good to Go">📦 TooGoodToGo</option>
-                        <option value="Altro"> Altro</option>
+                        <option value="Altro">📦 Altro</option>
                     </select>
                     
                     <!-- Campi Bollette (solo per Bollette) -->
@@ -655,7 +692,7 @@
                             <option value="" disabled selected>Seleziona fornitore</option>
                             <option value="AGSM">⚡ AGSM</option>
                             <option value="Acque Veronesi">💧 Acque Veronesi</option>
-                            <option value="Wi-Fi Vodafone">🛜 Wi-Fi Vodafone</option>
+                            <option value="Wi-Fi Vodafone">📶 Wi-Fi Vodafone</option>
                         </select>
                         
                         <input type="text" id="billStartDate" placeholder="Da (GG/MM/AAAA)">
@@ -703,6 +740,11 @@
                     </div>
                     
                     <div id="analyticsContent" class="collapsible-content">
+                        <!-- Controlli filtri -->
+                        <div class="filter-controls">
+                            <button class="reset-filters-btn" onclick="resetFilters()">🔄 RESET FILTRI</button>
+                        </div>
+
                         <!-- Filtri temporali -->
                         <div class="filter-grid">
                             <div class="filter-item">
@@ -864,21 +906,31 @@
                                 CONFRONTA PERIODI
                             </button>
                             
-                            <!-- Grafico confronto -->
-                            <div class="chart-container" id="comparisonChartContainer" style="display: none; margin-top: 10px;">
-                                <canvas id="comparisonChart"></canvas>
+                            <!-- Grafici confronto -->
+                            <div id="comparisonChartContainer" style="display: none; margin-top: 10px;">
+                                <div class="chart-container" id="singleComparisonChart">
+                                    <canvas id="comparisonChart"></canvas>
+                                </div>
+                                <div class="comparison-charts-container" id="dualComparisonCharts" style="display: none;">
+                                    <div class="comparison-chart-single">
+                                        <canvas id="comparisonChart1"></canvas>
+                                    </div>
+                                    <div class="comparison-chart-single">
+                                        <canvas id="comparisonChart2"></canvas>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Pulsanti tipo confronto -->
                             <div class="chart-buttons" id="comparisonButtons" style="display: none; margin-top: 10px;">
-                                <button class="chart-btn" onclick="changeComparisonType('bar')" style="background: #FF5722;">
+                                <button class="chart-btn" onclick="changeComparisonType('pie')" style="background: #FF5722;">
+                                    🥧 Torte
+                                </button>
+                                <button class="chart-btn" onclick="changeComparisonType('bar')" style="background: #00BCD4;">
                                     📊 Barre
                                 </button>
-                                <button class="chart-btn" onclick="changeComparisonType('line')" style="background: #00BCD4;">
+                                <button class="chart-btn" onclick="changeComparisonType('line')" style="background: #673AB7;">
                                     📈 Linee
-                                </button>
-                                <button class="chart-btn" onclick="changeComparisonType('category')" style="background: #673AB7;">
-                                    🏷️ Categorie
                                 </button>
                             </div>
                         </div>
@@ -891,6 +943,9 @@
                     <div id="expensesList">
                         <div class="no-data-message">Caricamento...</div>
                     </div>
+                </div>
+                <div class="load-more-container" id="loadMoreContainer" style="display: none;">
+                    <button class="load-more-btn" onclick="loadMoreExpenses()">MOSTRA ALTRE 20</button>
                 </div>
 
                 <!-- Sync Status -->
@@ -910,12 +965,15 @@
         // App State
         let expenses = [];
         let filteredExpenses = [];
+        let displayedExpenses = 20;
         let selectedPayer = null;
         let SCRIPT_URL = localStorage.getItem('sheetsScriptUrl');
         let activeCategories = new Set(['Spesa', 'Bollette', 'Affitto', 'Casa', 'Shopping', 'Tempo libero', 'Vacanze', 'Regali']);
         let currentChart = null;
         let currentChartType = 'pie';
         let comparisonChart = null;
+        let comparisonChart1 = null;
+        let comparisonChart2 = null;
         let currentComparisonType = 'bar';
 
         // Save Script URL
@@ -962,13 +1020,9 @@
             // Reset all conditional fields
             supermarketField.style.display = 'none';
             supermarketField.required = false;
-            supermarketField.value = '';
             
             billFields.style.display = 'none';
             document.getElementById('supplier').required = false;
-            document.getElementById('supplier').value = '';
-            document.getElementById('billStartDate').value = '';
-            document.getElementById('billEndDate').value = '';
             
             // Show relevant fields based on category
             if (category === 'Spesa') {
@@ -977,9 +1031,37 @@
             } else if (category === 'Bollette') {
                 billFields.style.display = 'block';
                 document.getElementById('supplier').required = true;
-                document.getElementById('billStartDate').required = true;
-                document.getElementById('billEndDate').required = true;
             }
+        }
+
+        // Parse date string to Date object
+        function parseDate(dateStr) {
+            if (!dateStr) return null;
+            
+            // Se è già un oggetto Date, restituiscilo
+            if (dateStr instanceof Date) return dateStr;
+            
+            // Se è una stringa, parsala
+            if (typeof dateStr === 'string') {
+                const parts = dateStr.split('/');
+                if (parts.length === 3) {
+                    return new Date(parts[2], parts[1] - 1, parts[0]);
+                }
+            }
+            
+            return null;
+        }
+
+        // Format date for display
+        function formatDate(date) {
+            if (!date) return '';
+            if (typeof date === 'string') return date;
+            
+            const d = new Date(date);
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            return dd + '/' + mm + '/' + yyyy;
         }
 
         // Format date input
@@ -1012,6 +1094,25 @@
                     updateChart();
                 }
             }
+        }
+
+        // Reset all filters
+        function resetFilters() {
+            // Reset temporal filters
+            document.getElementById('yearFilter').value = '';
+            document.getElementById('monthFilter').value = '';
+            
+            // Reset category filters
+            activeCategories = new Set(['Spesa', 'Bollette', 'Affitto', 'Casa', 'Shopping', 'Tempo libero', 'Vacanze', 'Regali']);
+            document.querySelectorAll('.category-chip').forEach(chip => {
+                chip.classList.add('active');
+            });
+            
+            // Reset displayed expenses
+            displayedExpenses = 20;
+            
+            // Apply filters
+            applyFilters();
         }
 
         // Toggle category filter
@@ -1052,6 +1153,7 @@
                 }
             }
             
+            displayedExpenses = 20;
             applyFilters();
         }
 
@@ -1061,19 +1163,25 @@
             const monthFilter = document.getElementById('monthFilter').value;
             
             filteredExpenses = expenses.filter(expense => {
+                // Category filter
                 if (!activeCategories.has(expense.category)) {
                     return false;
                 }
                 
+                // Parse expense date
+                const expenseDate = parseDate(expense.date);
+                if (!expenseDate) return false;
+                
+                // Year filter
                 if (yearFilter) {
-                    const expenseYear = expense.date.split('/')[2];
-                    if (expenseYear !== yearFilter) {
+                    if (expenseDate.getFullYear().toString() !== yearFilter) {
                         return false;
                     }
                 }
                 
+                // Month filter
                 if (monthFilter) {
-                    const expenseMonth = expense.date.split('/')[1];
+                    const expenseMonth = String(expenseDate.getMonth() + 1).padStart(2, '0');
                     if (expenseMonth !== monthFilter) {
                         return false;
                     }
@@ -1082,9 +1190,22 @@
                 return true;
             });
             
+            // Sort by date (newest first)
+            filteredExpenses.sort((a, b) => {
+                const dateA = parseDate(a.date);
+                const dateB = parseDate(b.date);
+                return dateB - dateA;
+            });
+            
             updateFilteredUI();
             updateStats();
             updateChart();
+        }
+
+        // Load more expenses
+        function loadMoreExpenses() {
+            displayedExpenses += 20;
+            updateFilteredUI();
         }
 
         // Update statistics
@@ -1101,25 +1222,20 @@
             
             let daysInPeriod = 30;
             if (filteredExpenses.length > 0) {
-                const dates = filteredExpenses.map(e => {
-                    const parts = e.date.split('/');
-                    return new Date(parts[2], parts[1] - 1, parts[0]);
-                });
-                const minDate = new Date(Math.min(...dates));
-                const maxDate = new Date(Math.max(...dates));
-                daysInPeriod = Math.max(1, Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24)) + 1);
+                const dates = filteredExpenses.map(e => parseDate(e.date)).filter(d => d);
+                if (dates.length > 0) {
+                    const minDate = new Date(Math.min(...dates));
+                    const maxDate = new Date(Math.max(...dates));
+                    daysInPeriod = Math.max(1, Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24)) + 1);
+                }
             }
             
-            const dailyAvg = totalFiltered / daysInPeriod;
+            const dailyAvg = daysInPeriod > 0 ? totalFiltered / daysInPeriod : 0;
             
-            document.getElementById('periodTotal').textContent = 
-                totalFiltered % 1 === 0 ? totalFiltered.toFixed(0) : totalFiltered.toFixed(2);
-            document.getElementById('dailyAvg').textContent = 
-                dailyAvg % 1 === 0 ? dailyAvg.toFixed(0) : dailyAvg.toFixed(2);
-            document.getElementById('marcoPeriod').textContent = 
-                marcoFiltered % 1 === 0 ? marcoFiltered.toFixed(0) : marcoFiltered.toFixed(2);
-            document.getElementById('valePeriod').textContent = 
-                valeFiltered % 1 === 0 ? valeFiltered.toFixed(0) : valeFiltered.toFixed(2);
+            document.getElementById('periodTotal').textContent = totalFiltered.toFixed(2);
+            document.getElementById('dailyAvg').textContent = dailyAvg.toFixed(2);
+            document.getElementById('marcoPeriod').textContent = marcoFiltered.toFixed(2);
+            document.getElementById('valePeriod').textContent = valeFiltered.toFixed(2);
         }
 
         // Update chart
@@ -1191,7 +1307,8 @@
                                 label: function(context) {
                                     const label = context.label || '';
                                     const value = context.parsed || context.parsed.y || 0;
-                                    const percentage = ((value / data.reduce((a, b) => a + b, 0)) * 100).toFixed(1);
+                                    const total = data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
                                     return label + ': €' + value.toFixed(2) + ' (' + percentage + '%)';
                                 }
                             }
@@ -1229,13 +1346,14 @@
             const timeData = {};
             filteredExpenses.forEach(expense => {
                 if (!expense.currency || expense.currency === 'EUR') {
-                    const parts = expense.date.split('/');
-                    let key;
+                    const date = parseDate(expense.date);
+                    if (!date) return;
                     
+                    let key;
                     if (granularity === 'daily') {
-                        key = expense.date;
+                        key = formatDate(date);
                     } else {
-                        key = parts[1] + '/' + parts[2];
+                        key = String(date.getMonth() + 1).padStart(2, '0') + '/' + date.getFullYear();
                     }
                     
                     timeData[key] = (timeData[key] || 0) + parseFloat(expense.amount || 0);
@@ -1244,11 +1362,11 @@
             
             const sortedKeys = Object.keys(timeData).sort((a, b) => {
                 const dateA = granularity === 'daily' 
-                    ? new Date(a.split('/').reverse().join('-'))
-                    : new Date(a.split('/').reverse().join('-') + '-01');
+                    ? parseDate(a)
+                    : new Date(a.split('/')[1], a.split('/')[0] - 1, 1);
                 const dateB = granularity === 'daily'
-                    ? new Date(b.split('/').reverse().join('-'))
-                    : new Date(b.split('/').reverse().join('-') + '-01');
+                    ? parseDate(b)
+                    : new Date(b.split('/')[1], b.split('/')[0] - 1, 1);
                 return dateA - dateB;
             });
             
@@ -1322,17 +1440,28 @@
                 return;
             }
             
+            // Filter expenses for both periods considering active categories
             const period1Expenses = expenses.filter(e => {
-                const parts = e.date.split('/');
-                if (parts[2] !== year1) return false;
-                if (month1 && month1 !== 'all' && parts[1] !== month1) return false;
+                if (!activeCategories.has(e.category)) return false;
+                const date = parseDate(e.date);
+                if (!date) return false;
+                if (date.getFullYear().toString() !== year1) return false;
+                if (month1 && month1 !== 'all') {
+                    const expMonth = String(date.getMonth() + 1).padStart(2, '0');
+                    if (expMonth !== month1) return false;
+                }
                 return true;
             });
             
             const period2Expenses = expenses.filter(e => {
-                const parts = e.date.split('/');
-                if (parts[2] !== year2) return false;
-                if (month2 && month2 !== 'all' && parts[1] !== month2) return false;
+                if (!activeCategories.has(e.category)) return false;
+                const date = parseDate(e.date);
+                if (!date) return false;
+                if (date.getFullYear().toString() !== year2) return false;
+                if (month2 && month2 !== 'all') {
+                    const expMonth = String(date.getMonth() + 1).padStart(2, '0');
+                    if (expMonth !== month2) return false;
+                }
                 return true;
             });
             
@@ -1344,103 +1473,164 @@
 
         // Update comparison chart
         function updateComparisonChart(period1, period2, year1, month1, year2, month2) {
-            const ctx = document.getElementById('comparisonChart');
-            
-            if (comparisonChart) {
-                comparisonChart.destroy();
-            }
-            
             const label1 = month1 && month1 !== 'all' ? getMonthName(month1) + ' ' + year1 : year1;
             const label2 = month2 && month2 !== 'all' ? getMonthName(month2) + ' ' + year2 : year2;
             
-            if (currentComparisonType === 'category') {
-                const categories = ['Spesa', 'Bollette', 'Affitto', 'Casa', 'Shopping', 'Tempo libero', 'Vacanze', 'Regali'];
+            // Destroy existing charts
+            if (comparisonChart) {
+                comparisonChart.destroy();
+                comparisonChart = null;
+            }
+            if (comparisonChart1) {
+                comparisonChart1.destroy();
+                comparisonChart1 = null;
+            }
+            if (comparisonChart2) {
+                comparisonChart2.destroy();
+                comparisonChart2 = null;
+            }
+            
+            if (currentComparisonType === 'pie') {
+                // Show dual pie charts
+                document.getElementById('singleComparisonChart').style.display = 'none';
+                document.getElementById('dualComparisonCharts').style.display = 'flex';
                 
-                const data1 = categories.map(cat => {
-                    return period1
-                        .filter(e => e.category === cat && (!e.currency || e.currency === 'EUR'))
-                        .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+                // Prepare data for both periods
+                const categories1 = {};
+                const categories2 = {};
+                
+                period1.forEach(e => {
+                    if (!e.currency || e.currency === 'EUR') {
+                        categories1[e.category] = (categories1[e.category] || 0) + parseFloat(e.amount || 0);
+                    }
                 });
                 
-                const data2 = categories.map(cat => {
-                    return period2
-                        .filter(e => e.category === cat && (!e.currency || e.currency === 'EUR'))
-                        .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+                period2.forEach(e => {
+                    if (!e.currency || e.currency === 'EUR') {
+                        categories2[e.category] = (categories2[e.category] || 0) + parseFloat(e.amount || 0);
+                    }
                 });
                 
-                comparisonChart = new Chart(ctx, {
-                    type: 'bar',
+                const colors = [
+                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+                    '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
+                ];
+                
+                // Create first pie chart
+                const ctx1 = document.getElementById('comparisonChart1');
+                comparisonChart1 = new Chart(ctx1, {
+                    type: 'pie',
                     data: {
-                        labels: categories,
-                        datasets: [
-                            {
-                                label: label1,
-                                data: data1,
-                                backgroundColor: 'rgba(102, 126, 234, 0.7)',
-                                borderColor: '#667eea',
-                                borderWidth: 1
-                            },
-                            {
-                                label: label2,
-                                data: data2,
-                                backgroundColor: 'rgba(255, 99, 132, 0.7)',
-                                borderColor: '#ff6384',
-                                borderWidth: 1
-                            }
-                        ]
+                        labels: Object.keys(categories1),
+                        datasets: [{
+                            data: Object.values(categories1),
+                            backgroundColor: colors.slice(0, Object.keys(categories1).length),
+                            borderWidth: 1,
+                            borderColor: '#fff'
+                        }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: {
+                            title: {
                                 display: true,
-                                labels: { font: { size: 10 } }
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: { font: { size: 10 } }
+                                text: label1,
+                                font: { size: 12 }
                             },
-                            x: {
-                                ticks: { 
-                                    font: { size: 10 },
-                                    maxRotation: 45,
-                                    minRotation: 45
-                                }
+                            legend: {
+                                position: 'bottom',
+                                labels: { font: { size: 9 } }
                             }
                         }
                     }
                 });
-            } else {
-                const total1 = period1
-                    .filter(e => !e.currency || e.currency === 'EUR')
-                    .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
                 
-                const total2 = period2
-                    .filter(e => !e.currency || e.currency === 'EUR')
-                    .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+                // Create second pie chart
+                const ctx2 = document.getElementById('comparisonChart2');
+                comparisonChart2 = new Chart(ctx2, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(categories2),
+                        datasets: [{
+                            data: Object.values(categories2),
+                            backgroundColor: colors.slice(0, Object.keys(categories2).length),
+                            borderWidth: 1,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: label2,
+                                font: { size: 12 }
+                            },
+                            legend: {
+                                position: 'bottom',
+                                labels: { font: { size: 9 } }
+                            }
+                        }
+                    }
+                });
+                
+            } else {
+                // Show single comparison chart (bar or line)
+                document.getElementById('singleComparisonChart').style.display = 'block';
+                document.getElementById('dualComparisonCharts').style.display = 'none';
+                
+                const ctx = document.getElementById('comparisonChart');
                 
                 if (currentComparisonType === 'bar') {
+                    // Group by categories
+                    const allCategories = new Set();
+                    period1.forEach(e => allCategories.add(e.category));
+                    period2.forEach(e => allCategories.add(e.category));
+                    
+                    const categories = Array.from(allCategories).filter(cat => activeCategories.has(cat));
+                    
+                    const data1 = categories.map(cat => {
+                        return period1
+                            .filter(e => e.category === cat && (!e.currency || e.currency === 'EUR'))
+                            .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+                    });
+                    
+                    const data2 = categories.map(cat => {
+                        return period2
+                            .filter(e => e.category === cat && (!e.currency || e.currency === 'EUR'))
+                            .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+                    });
+                    
                     comparisonChart = new Chart(ctx, {
                         type: 'bar',
                         data: {
-                            labels: [label1, label2],
-                            datasets: [{
-                                label: 'Totale Spese',
-                                data: [total1, total2],
-                                backgroundColor: ['rgba(102, 126, 234, 0.7)', 'rgba(255, 99, 132, 0.7)'],
-                                borderColor: ['#667eea', '#ff6384'],
-                                borderWidth: 1
-                            }]
+                            labels: categories,
+                            datasets: [
+                                {
+                                    label: label1,
+                                    data: data1,
+                                    backgroundColor: 'rgba(102, 126, 234, 0.7)',
+                                    borderColor: '#667eea',
+                                    borderWidth: 1
+                                },
+                                {
+                                    label: label2,
+                                    data: data2,
+                                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                                    borderColor: '#ff6384',
+                                    borderWidth: 1
+                                }
+                            ]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
                             plugins: {
                                 legend: {
-                                    display: false
+                                    display: true,
+                                    labels: { font: { size: 10 } }
                                 }
                             },
                             scales: {
@@ -1449,46 +1639,65 @@
                                     ticks: { font: { size: 10 } }
                                 },
                                 x: {
-                                    ticks: { font: { size: 10 } }
+                                    ticks: { 
+                                        font: { size: 10 },
+                                        maxRotation: 45,
+                                        minRotation: 45
+                                    }
                                 }
                             }
                         }
                     });
+                    
                 } else {
+                    // Line chart - daily or monthly comparison
                     const timeData1 = {};
                     const timeData2 = {};
                     
+                    const isMonthly = !month1 || month1 === 'all' || !month2 || month2 === 'all';
+                    
                     period1.forEach(e => {
                         if (!e.currency || e.currency === 'EUR') {
-                            const key = e.date.split('/')[0];
+                            const date = parseDate(e.date);
+                            if (!date) return;
+                            const key = isMonthly 
+                                ? String(date.getMonth() + 1).padStart(2, '0')
+                                : String(date.getDate()).padStart(2, '0');
                             timeData1[key] = (timeData1[key] || 0) + parseFloat(e.amount || 0);
                         }
                     });
                     
                     period2.forEach(e => {
                         if (!e.currency || e.currency === 'EUR') {
-                            const key = e.date.split('/')[0];
+                            const date = parseDate(e.date);
+                            if (!date) return;
+                            const key = isMonthly 
+                                ? String(date.getMonth() + 1).padStart(2, '0')
+                                : String(date.getDate()).padStart(2, '0');
                             timeData2[key] = (timeData2[key] || 0) + parseFloat(e.amount || 0);
                         }
                     });
                     
-                    const allDays = [...new Set([...Object.keys(timeData1), ...Object.keys(timeData2)])].sort((a, b) => parseInt(a) - parseInt(b));
+                    const allKeys = [...new Set([...Object.keys(timeData1), ...Object.keys(timeData2)])].sort();
+                    const labels = isMonthly 
+                        ? allKeys.map(k => getMonthName(k))
+                        : allKeys.map(k => 'Giorno ' + parseInt(k));
                     
                     comparisonChart = new Chart(ctx, {
                         type: 'line',
                         data: {
-                            labels: allDays,
+                            labels: labels,
                             datasets: [
                                 {
                                     label: label1,
-                                    data: allDays.map(day => timeData1[day] || 0),
+                                    data: allKeys.map(key => timeData1[key] || 0),
                                     borderColor: '#667eea',
                                     backgroundColor: 'rgba(102, 126, 234, 0.1)',
                                     tension: 0.1
                                 },
                                 {
                                     label: label2,
-                                    data: allDays.map(day => timeData2[day] || 0),
+                                    data: allKeys.map(key => timeData2[key] || 0),
                                     borderColor: '#ff6384',
                                     backgroundColor: 'rgba(255, 99, 132, 0.1)',
                                     tension: 0.1
@@ -1509,426 +1718,3 @@
                                     beginAtZero: true,
                                     ticks: { font: { size: 10 } }
                                 },
-                                x: {
-                                    ticks: { font: { size: 10 } }
-                                }
-                            }
-                        }
-                    });
-                }
-            }
-        }
-
-        // Change chart type
-        function changeChartType(type) {
-            currentChartType = type;
-            updateChart();
-        }
-
-        // Change comparison type
-        function changeComparisonType(type) {
-            currentComparisonType = type;
-            comparePeriodsChart();
-        }
-
-        // Get month name
-        function getMonthName(month) {
-            const months = {
-                '01': 'Gennaio', '02': 'Febbraio', '03': 'Marzo', '04': 'Aprile',
-                '05': 'Maggio', '06': 'Giugno', '07': 'Luglio', '08': 'Agosto',
-                '09': 'Settembre', '10': 'Ottobre', '11': 'Novembre', '12': 'Dicembre'
-            };
-            return months[month] || month;
-        }
-
-        // Update filtered UI
-        function updateFilteredUI() {
-            const expensesList = document.getElementById('expensesList');
-            const countEl = document.getElementById('filteredCount');
-            
-            if (filteredExpenses.length < expenses.length) {
-                countEl.textContent = '(' + filteredExpenses.length + ' di ' + expenses.length + ')';
-            } else {
-                countEl.textContent = '';
-            }
-            
-            expensesList.innerHTML = '';
-            
-            if (filteredExpenses.length === 0) {
-                expensesList.innerHTML = '<div class="no-data-message">Nessuna spesa con questi filtri</div>';
-                return;
-            }
-            
-            filteredExpenses.slice(0, 50).forEach(expense => {
-                const currencySymbols = { 'EUR': '€', 'USD': '$', 'GBP': '£' };
-                const currency = expense.currency || 'EUR';
-                const symbol = currencySymbols[currency] || '€';
-                
-                const item = document.createElement('div');
-                item.className = 'expense-item';
-                
-                const detailsDiv = document.createElement('div');
-                detailsDiv.className = 'expense-details';
-                
-                const descDiv = document.createElement('div');
-                descDiv.className = 'expense-description';
-                descDiv.textContent = expense.description;
-                
-                const metaDiv = document.createElement('div');
-                metaDiv.className = 'expense-meta';
-                const payerIcon = expense.payer === 'Marco' ? '👨' : '👩';
-                
-                let categoryText = expense.category;
-                if (expense.category === 'Spesa' && expense.supermarket) {
-                    categoryText = expense.category + ' (' + expense.supermarket + ')';
-                } else if (expense.category === 'Bollette' && expense.supplier) {
-                    categoryText = expense.category + ' (' + expense.supplier + ')';
-                    if (expense.billStartDate && expense.billEndDate) {
-                        categoryText += ' ' + expense.billStartDate + '-' + expense.billEndDate;
-                    }
-                }
-                
-                metaDiv.textContent = payerIcon + ' ' + categoryText + ' • ' + expense.date;
-                
-                detailsDiv.appendChild(descDiv);
-                detailsDiv.appendChild(metaDiv);
-                
-                const actionsDiv = document.createElement('div');
-                actionsDiv.style.display = 'flex';
-                actionsDiv.style.alignItems = 'center';
-                
-                const amountDiv = document.createElement('div');
-                amountDiv.className = 'expense-amount';
-                const amountValue = parseFloat(expense.amount || 0);
-                amountDiv.textContent = symbol + (amountValue % 1 === 0 ? amountValue.toFixed(0) : amountValue.toFixed(2));
-                
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'delete-btn';
-                deleteBtn.textContent = '×';
-                deleteBtn.onclick = () => deleteExpense(expense.id);
-                
-                actionsDiv.appendChild(amountDiv);
-                actionsDiv.appendChild(deleteBtn);
-                
-                item.appendChild(detailsDiv);
-                item.appendChild(actionsDiv);
-                
-                expensesList.appendChild(item);
-            });
-        }
-
-        // Imposta la data di oggi nel campo data
-        function setTodayDate() {
-            const today = new Date();
-            const dd = String(today.getDate()).padStart(2, '0');
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
-            const yyyy = today.getFullYear();
-            document.getElementById('expenseDate').value = dd + '/' + mm + '/' + yyyy;
-        }
-
-        // Event listener per formattare la data
-        document.addEventListener('DOMContentLoaded', function() {
-            const dateInput = document.getElementById('expenseDate');
-            if (dateInput) {
-                dateInput.addEventListener('blur', function() {
-                    formatDateInput(this);
-                });
-            }
-            
-            const billStartDate = document.getElementById('billStartDate');
-            if (billStartDate) {
-                billStartDate.addEventListener('blur', function() {
-                    formatDateInput(this);
-                });
-            }
-            
-            const billEndDate = document.getElementById('billEndDate');
-            if (billEndDate) {
-                billEndDate.addEventListener('blur', function() {
-                    formatDateInput(this);
-                });
-            }
-        });
-
-        // Change configuration
-        function changeConfig() {
-            if (confirm('Vuoi cambiare l\'URL di configurazione?')) {
-                localStorage.removeItem('sheetsScriptUrl');
-                location.reload();
-            }
-        }
-
-        // Load expenses
-        function loadExpenses() {
-            if (!SCRIPT_URL) return;
-            
-            updateSyncStatus('Caricamento...', false);
-            
-            const callbackName = 'callback_' + Math.floor(Math.random() * 1000000);
-            
-            window[callbackName] = function(result) {
-                if (result.success) {
-                    expenses = result.data || [];
-                    filteredExpenses = [...expenses];
-                    updateUI();
-                    applyFilters();
-                    updateSyncStatus('✅ Sincronizzato', false);
-                } else {
-                    updateSyncStatus('❌ Errore', true);
-                }
-                
-                delete window[callbackName];
-                const script = document.getElementById(callbackName);
-                if (script) script.remove();
-            };
-            
-            const script = document.createElement('script');
-            script.id = callbackName;
-            script.src = SCRIPT_URL + '?callback=' + callbackName;
-            script.onerror = function() {
-                updateSyncStatus('❌ Errore connessione', true);
-                delete window[callbackName];
-                if (script) script.remove();
-            };
-            
-            document.body.appendChild(script);
-        }
-
-        // Select payer
-        function selectPayer(payer) {
-            selectedPayer = payer;
-            const buttons = document.querySelectorAll('.payer-btn');
-            buttons.forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.textContent.includes(payer)) {
-                    btn.classList.add('active');
-                }
-            });
-        }
-
-        // Add expense con versione di debugg
-
-async function addExpense() {
-    const description = document.getElementById('description').value;
-    const category = document.getElementById('category').value;
-    const amount = document.getElementById('amount').value;
-    const currency = document.getElementById('currency').value;
-    let expenseDate = document.getElementById('expenseDate').value;
-    const supermarket = document.getElementById('supermarket').value;
-    const supplier = document.getElementById('supplier').value;
-    let billStartDate = document.getElementById('billStartDate').value;
-    let billEndDate = document.getElementById('billEndDate').value;
-    
-    // DEBUG: Log tutti i valori letti
-    console.log('=== VALORI LETTI DAL FORM ===');
-    console.log('Categoria:', category);
-    console.log('Supermercato:', supermarket);
-    console.log('Supermercato display:', document.getElementById('supermarket').style.display);
-    console.log('Fornitore:', supplier);
-    console.log('Date bolletta:', billStartDate, billEndDate);
-    
-    if (!selectedPayer) {
-        alert('Seleziona chi ha pagato!');
-        return;
-    }
-    
-    if (!description || !category || !amount || !expenseDate) {
-        alert('Compila tutti i campi!');
-        return;
-    }
-    
-    if (category === 'Spesa' && !supermarket) {
-        alert('Seleziona il supermercato!');
-        return;
-    }
-    
-    if (category === 'Bollette') {
-        if (!supplier || !billStartDate || !billEndDate) {
-            alert('Compila tutti i campi della bolletta!');
-            return;
-        }
-    }
-    
-    // Formatta tutte le date
-    if (/^\d{8}$/.test(expenseDate)) {
-        const dd = expenseDate.substring(0, 2);
-        const mm = expenseDate.substring(2, 4);
-        const yyyy = expenseDate.substring(4, 8);
-        expenseDate = dd + '/' + mm + '/' + yyyy;
-    } else {
-        expenseDate = expenseDate.replace(/[.-]/g, '/');
-    }
-    
-    if (billStartDate) {
-        if (/^\d{8}$/.test(billStartDate)) {
-            const dd = billStartDate.substring(0, 2);
-            const mm = billStartDate.substring(2, 4);
-            const yyyy = billStartDate.substring(4, 8);
-            billStartDate = dd + '/' + mm + '/' + yyyy;
-        } else {
-            billStartDate = billStartDate.replace(/[.-]/g, '/');
-        }
-    }
-    
-    if (billEndDate) {
-        if (/^\d{8}$/.test(billEndDate)) {
-            const dd = billEndDate.substring(0, 2);
-            const mm = billEndDate.substring(2, 4);
-            const yyyy = billEndDate.substring(4, 8);
-            billEndDate = dd + '/' + mm + '/' + yyyy;
-        } else {
-            billEndDate = billEndDate.replace(/[.-]/g, '/');
-        }
-    }
-    
-    document.getElementById('addBtn').disabled = true;
-    updateSyncStatus('Salvataggio...', false);
-    
-    const expense = {
-        id: Date.now().toString(),
-        date: expenseDate,
-        payer: selectedPayer,
-        description: description,
-        category: category,
-        amount: parseFloat(amount),
-        currency: currency,
-        supermarket: supermarket || '',  // Assicurati che sia sempre una stringa
-        supplier: supplier || '',
-        billStartDate: billStartDate || '',
-        billEndDate: billEndDate || '',
-        action: 'add'
-    };
-    
-    // DEBUG: Log l'oggetto che stiamo per inviare
-    console.log('=== OGGETTO DA INVIARE ===');
-    console.log(JSON.stringify(expense, null, 2));
-    
-    // DEBUG: Verifica specificamente il campo supermarket
-    console.log('Campo supermarket nell\'oggetto:', expense.supermarket);
-    
-    try {
-        const bodyToSend = JSON.stringify(expense);
-        
-        // DEBUG: Log del body effettivo
-        console.log('=== BODY DELLA REQUEST ===');
-        console.log(bodyToSend);
-        
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: {
-                'Content-Type': 'text/plain',
-            },
-            body: bodyToSend
-        });
-        
-        // Nota: con mode: 'no-cors' non possiamo leggere la risposta
-        console.log('Request inviata con successo');
-        
-        expenses.unshift(expense);
-        updateUI();
-        applyFilters();
-        
-        // Reset form
-        document.getElementById('description').value = '';
-        document.getElementById('category').value = '';
-        document.getElementById('amount').value = '';
-        document.getElementById('supermarket').value = '';
-        document.getElementById('supermarket').style.display = 'none';
-        document.getElementById('supplier').value = '';
-        document.getElementById('billStartDate').value = '';
-        document.getElementById('billEndDate').value = '';
-        document.getElementById('billFields').style.display = 'none';
-        selectedPayer = null;
-        document.querySelectorAll('.payer-btn').forEach(btn => btn.classList.remove('active'));
-        
-        setTodayDate();
-        
-        updateSyncStatus('✅ Aggiunto', false);
-        
-        // DEBUG: Attendi prima di ricaricare per vedere i log
-        console.log('=== ATTESA PRIMA DEL RELOAD ===');
-        setTimeout(loadExpenses, 2000); // Aumentato a 2 secondi per debug
-        
-    } catch (error) {
-        console.error('ERRORE:', error);
-        updateSyncStatus('❌ Errore', true);
-    } finally {
-        document.getElementById('addBtn').disabled = false;
-    }
-}
-
-        // Delete expense
-        async function deleteExpense(id) {
-            if (!confirm('Eliminare?')) return;
-            
-            updateSyncStatus('Eliminazione...', false);
-            
-            try {
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'text/plain',
-                    },
-                    body: JSON.stringify({ action: 'delete', id: id })
-                });
-                
-                expenses = expenses.filter(e => e.id !== id);
-                updateUI();
-                applyFilters();
-                updateSyncStatus('✅ Eliminato', false);
-                
-                setTimeout(loadExpenses, 1000);
-                
-            } catch (error) {
-                updateSyncStatus('❌ Errore', true);
-            }
-        }
-
-        // Update UI (totali generali)
-        function updateUI() {
-            const marcoTotal = expenses
-                .filter(e => e.payer === 'Marco' && (!e.currency || e.currency === 'EUR'))
-                .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
-            
-            const valeTotal = expenses
-                .filter(e => e.payer === 'Vale' && (!e.currency || e.currency === 'EUR'))
-                .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
-            
-            document.getElementById('marcoTotal').textContent = 
-                marcoTotal % 1 === 0 ? marcoTotal.toFixed(0) : marcoTotal.toFixed(2);
-            document.getElementById('valeTotal').textContent = 
-                valeTotal % 1 === 0 ? valeTotal.toFixed(0) : valeTotal.toFixed(2);
-            
-            const difference = Math.abs(marcoTotal - valeTotal) / 2;
-            const balanceText = document.getElementById('balanceText');
-            
-            if (Math.abs(marcoTotal - valeTotal) < 0.01) {
-                balanceText.textContent = '✅ In pari';
-                balanceText.style.color = '#4CAF50';
-            } else if (marcoTotal > valeTotal) {
-                const diffDisplay = difference % 1 === 0 ? difference.toFixed(0) : difference.toFixed(2);
-                balanceText.textContent = 'Vale deve €' + diffDisplay;
-                balanceText.style.color = '#ff9800';
-            } else {
-                const diffDisplay = difference % 1 === 0 ? difference.toFixed(0) : difference.toFixed(2);
-                balanceText.textContent = 'Marco deve €' + diffDisplay;
-                balanceText.style.color = '#ff9800';
-            }
-        }
-
-        // Update sync status
-        function updateSyncStatus(message, isError) {
-            const statusEl = document.getElementById('syncStatus');
-            statusEl.textContent = message;
-            statusEl.className = isError ? 'sync-status error' : 'sync-status';
-        }
-
-        // Auto-refresh ogni 60 secondi
-        if (SCRIPT_URL) {
-            setInterval(loadExpenses, 60000);
-        }
-    </script>
-</body>
-</html>
