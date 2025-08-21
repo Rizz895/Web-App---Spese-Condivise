@@ -171,24 +171,6 @@
             gap: 8px;
         }
 
-        #billFields {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            background: #f9f9f9;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: -4px;
-        }
-
-        #billFields input {
-            font-size: 13px;
-        }
-
-        #billFields select {
-            font-size: 13px;
-        }
-
         .input-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -252,6 +234,7 @@
             color: #667eea;
         }
 
+        /* Sezione Filtri e Analisi */
         .analytics-section {
             margin-top: 15px;
         }
@@ -554,6 +537,7 @@
             font-size: 12px;
         }
 
+        /* Scrollbar personalizzata */
         .expense-list::-webkit-scrollbar {
             width: 6px;
         }
@@ -568,6 +552,7 @@
             border-radius: 3px;
         }
 
+        /* Ottimizzazioni per schermi molto piccoli */
         @media (max-width: 380px) {
             h1 {
                 font-size: 20px;
@@ -591,6 +576,7 @@
             }
         }
 
+        /* Rimuove il tap highlight su mobile */
         * {
             -webkit-tap-highlight-color: transparent;
         }
@@ -624,7 +610,7 @@
                 <div class="expense-form">
                     <input type="text" id="description" placeholder="Cosa hai comprato?" required>
                     
-                    <select id="category" required onchange="toggleConditionalFields()">
+                    <select id="category" required onchange="toggleSupermarketField()">
                         <option value="" disabled selected>Seleziona categoria</option>
                         <option value="Spesa">🛒 Spesa</option>
                         <option value="Bollette">📄 Bollette</option>
@@ -636,31 +622,14 @@
                         <option value="Regali">🎁 Regali</option>
                     </select>
                     
-                    <!-- Campo Supermercato (solo per Spesa) -->
                     <select id="supermarket" style="display: none;">
                         <option value="" disabled selected>Seleziona supermercato</option>
                         <option value="Martinelli">🏪 Martinelli</option>
                         <option value="Esselunga">🛒 Esselunga</option>
                         <option value="Migross">🏬 Migross</option>
                         <option value="Aldi">🛍️ Aldi</option>
-                        <option value="Famila">ℹ️ Famila</option>
-                        <option value="Tosano">™️  Tosano</option>
-                        <option value="Too Good to Go">📦 TooGoodToGo</option>
-                        <option value="Altro"> Altro</option>
+                        <option value="Altro">📦 Altro</option>
                     </select>
-                    
-                    <!-- Campi Bollette (solo per Bollette) -->
-                    <div id="billFields" style="display: none;">
-                        <select id="supplier">
-                            <option value="" disabled selected>Seleziona fornitore</option>
-                            <option value="AGSM">⚡ AGSM</option>
-                            <option value="Acque Veronesi">💧 Acque Veronesi</option>
-                            <option value="Wi-Fi Vodafone">🛜 Wi-Fi Vodafone</option>
-                        </select>
-                        
-                        <input type="text" id="billStartDate" placeholder="Da (GG/MM/AAAA)">
-                        <input type="text" id="billEndDate" placeholder="A (GG/MM/AAAA)">
-                    </div>
                     
                     <input type="text" id="expenseDate" placeholder="Data (GG/MM/AAAA)" required>
                     
@@ -918,28 +887,6 @@
         let comparisonChart = null;
         let currentComparisonType = 'bar';
 
-        // Save Script URL
-        function saveScriptUrl() {
-            const url = document.getElementById('scriptUrl').value.trim();
-            if (!url) {
-                alert('Inserisci l\'URL del Web App!');
-                return;
-            }
-            
-            if (!url.endsWith('/exec')) {
-                alert('L\'URL deve terminare con /exec');
-                return;
-            }
-            
-            localStorage.setItem('sheetsScriptUrl', url);
-            SCRIPT_URL = url;
-            
-            document.getElementById('setupNotice').style.display = 'none';
-            document.getElementById('mainApp').style.display = 'block';
-            
-            loadExpenses();
-        }
-
         // Check if already configured
         window.onload = function() {
             if (SCRIPT_URL) {
@@ -953,47 +900,18 @@
             setTodayDate();
         };
 
-        // Toggle conditional fields based on category
-        function toggleConditionalFields() {
+        // Toggle supermarket field visibility
+        function toggleSupermarketField() {
             const category = document.getElementById('category').value;
             const supermarketField = document.getElementById('supermarket');
-            const billFields = document.getElementById('billFields');
             
-            // Reset all conditional fields
-            supermarketField.style.display = 'none';
-            supermarketField.required = false;
-            supermarketField.value = '';
-            
-            billFields.style.display = 'none';
-            document.getElementById('supplier').required = false;
-            document.getElementById('supplier').value = '';
-            document.getElementById('billStartDate').value = '';
-            document.getElementById('billEndDate').value = '';
-            
-            // Show relevant fields based on category
             if (category === 'Spesa') {
                 supermarketField.style.display = 'block';
                 supermarketField.required = true;
-            } else if (category === 'Bollette') {
-                billFields.style.display = 'block';
-                document.getElementById('supplier').required = true;
-                document.getElementById('billStartDate').required = true;
-                document.getElementById('billEndDate').required = true;
-            }
-        }
-
-        // Format date input
-        function formatDateInput(input) {
-            let value = input.value;
-            
-            if (/^\d{8}$/.test(value)) {
-                const dd = value.substring(0, 2);
-                const mm = value.substring(2, 4);
-                const yyyy = value.substring(4, 8);
-                input.value = dd + '/' + mm + '/' + yyyy;
-            }
-            else if (value.includes('.') || value.includes('-')) {
-                input.value = value.replace(/[.-]/g, '/');
+            } else {
+                supermarketField.style.display = 'none';
+                supermarketField.required = false;
+                supermarketField.value = '';
             }
         }
 
@@ -1216,16 +1134,18 @@
         function updateTimelineChart() {
             const ctx = document.getElementById('expenseChart');
             
+            // Determina la granularità
             const yearFilter = document.getElementById('yearFilter').value;
             const monthFilter = document.getElementById('monthFilter').value;
             
-            let granularity = 'monthly';
+            let granularity = 'monthly'; // default
             if (monthFilter) {
                 granularity = 'daily';
             } else if (!yearFilter) {
                 granularity = 'monthly';
             }
             
+            // Aggrega i dati per periodo
             const timeData = {};
             filteredExpenses.forEach(expense => {
                 if (!expense.currency || expense.currency === 'EUR') {
@@ -1235,13 +1155,14 @@
                     if (granularity === 'daily') {
                         key = expense.date;
                     } else {
-                        key = parts[1] + '/' + parts[2];
+                        key = `${parts[1]}/${parts[2]}`;
                     }
                     
                     timeData[key] = (timeData[key] || 0) + parseFloat(expense.amount || 0);
                 }
             });
             
+            // Ordina le chiavi cronologicamente
             const sortedKeys = Object.keys(timeData).sort((a, b) => {
                 const dateA = granularity === 'daily' 
                     ? new Date(a.split('/').reverse().join('-'))
@@ -1322,6 +1243,7 @@
                 return;
             }
             
+            // Filtra i dati per i due periodi
             const period1Expenses = expenses.filter(e => {
                 const parts = e.date.split('/');
                 if (parts[2] !== year1) return false;
@@ -1336,6 +1258,7 @@
                 return true;
             });
             
+            // Mostra il grafico di confronto
             document.getElementById('comparisonChartContainer').style.display = 'block';
             document.getElementById('comparisonButtons').style.display = 'grid';
             
@@ -1350,10 +1273,11 @@
                 comparisonChart.destroy();
             }
             
-            const label1 = month1 && month1 !== 'all' ? getMonthName(month1) + ' ' + year1 : year1;
-            const label2 = month2 && month2 !== 'all' ? getMonthName(month2) + ' ' + year2 : year2;
+            const label1 = month1 && month1 !== 'all' ? `${getMonthName(month1)} ${year1}` : year1;
+            const label2 = month2 && month2 !== 'all' ? `${getMonthName(month2)} ${year2}` : year2;
             
             if (currentComparisonType === 'category') {
+                // Confronto per categoria
                 const categories = ['Spesa', 'Bollette', 'Affitto', 'Casa', 'Shopping', 'Tempo libero', 'Vacanze', 'Regali'];
                 
                 const data1 = categories.map(cat => {
@@ -1414,6 +1338,7 @@
                     }
                 });
             } else {
+                // Confronto totali o timeline
                 const total1 = period1
                     .filter(e => !e.currency || e.currency === 'EUR')
                     .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
@@ -1455,19 +1380,20 @@
                         }
                     });
                 } else {
+                    // Line comparison (timeline overlay)
                     const timeData1 = {};
                     const timeData2 = {};
                     
                     period1.forEach(e => {
                         if (!e.currency || e.currency === 'EUR') {
-                            const key = e.date.split('/')[0];
+                            const key = e.date.split('/')[0]; // giorno del mese
                             timeData1[key] = (timeData1[key] || 0) + parseFloat(e.amount || 0);
                         }
                     });
                     
                     period2.forEach(e => {
                         if (!e.currency || e.currency === 'EUR') {
-                            const key = e.date.split('/')[0];
+                            const key = e.date.split('/')[0]; // giorno del mese
                             timeData2[key] = (timeData2[key] || 0) + parseFloat(e.amount || 0);
                         }
                     });
@@ -1547,7 +1473,7 @@
             const countEl = document.getElementById('filteredCount');
             
             if (filteredExpenses.length < expenses.length) {
-                countEl.textContent = '(' + filteredExpenses.length + ' di ' + expenses.length + ')';
+                countEl.textContent = `(${filteredExpenses.length} di ${expenses.length})`;
             } else {
                 countEl.textContent = '';
             }
@@ -1577,18 +1503,7 @@
                 const metaDiv = document.createElement('div');
                 metaDiv.className = 'expense-meta';
                 const payerIcon = expense.payer === 'Marco' ? '👨' : '👩';
-                
-                let categoryText = expense.category;
-                if (expense.category === 'Spesa' && expense.supermarket) {
-                    categoryText = expense.category + ' (' + expense.supermarket + ')';
-                } else if (expense.category === 'Bollette' && expense.supplier) {
-                    categoryText = expense.category + ' (' + expense.supplier + ')';
-                    if (expense.billStartDate && expense.billEndDate) {
-                        categoryText += ' ' + expense.billStartDate + '-' + expense.billEndDate;
-                    }
-                }
-                
-                metaDiv.textContent = payerIcon + ' ' + categoryText + ' • ' + expense.date;
+                metaDiv.textContent = `${payerIcon} ${expense.category} • ${expense.date}`;
                 
                 detailsDiv.appendChild(descDiv);
                 detailsDiv.appendChild(metaDiv);
@@ -1623,7 +1538,7 @@
             const dd = String(today.getDate()).padStart(2, '0');
             const mm = String(today.getMonth() + 1).padStart(2, '0');
             const yyyy = today.getFullYear();
-            document.getElementById('expenseDate').value = dd + '/' + mm + '/' + yyyy;
+            document.getElementById('expenseDate').value = `${dd}/${mm}/${yyyy}`;
         }
 
         // Event listener per formattare la data
@@ -1631,21 +1546,17 @@
             const dateInput = document.getElementById('expenseDate');
             if (dateInput) {
                 dateInput.addEventListener('blur', function() {
-                    formatDateInput(this);
-                });
-            }
-            
-            const billStartDate = document.getElementById('billStartDate');
-            if (billStartDate) {
-                billStartDate.addEventListener('blur', function() {
-                    formatDateInput(this);
-                });
-            }
-            
-            const billEndDate = document.getElementById('billEndDate');
-            if (billEndDate) {
-                billEndDate.addEventListener('blur', function() {
-                    formatDateInput(this);
+                    let formatted = this.value;
+                    
+                    if (/^\d{8}$/.test(formatted)) {
+                        const dd = formatted.substring(0, 2);
+                        const mm = formatted.substring(2, 4);
+                        const yyyy = formatted.substring(4, 8);
+                        this.value = `${dd}/${mm}/${yyyy}`;
+                    }
+                    else if (formatted.includes('.') || formatted.includes('-')) {
+                        this.value = formatted.replace(/[.-]/g, '/');
+                    }
                 });
             }
         });
@@ -1656,6 +1567,28 @@
                 localStorage.removeItem('sheetsScriptUrl');
                 location.reload();
             }
+        }
+
+        // Save Script URL
+        function saveScriptUrl() {
+            const url = document.getElementById('scriptUrl').value.trim();
+            if (!url) {
+                alert('Inserisci l\'URL del Web App!');
+                return;
+            }
+            
+            if (!url.endsWith('/exec')) {
+                alert('L\'URL deve terminare con /exec');
+                return;
+            }
+            
+            localStorage.setItem('sheetsScriptUrl', url);
+            SCRIPT_URL = url;
+            
+            document.getElementById('setupNotice').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            
+            loadExpenses();
         }
 
         // Load expenses
@@ -1706,157 +1639,91 @@
             });
         }
 
-        // Add expense con versione di debugg
-
-async function addExpense() {
-    const description = document.getElementById('description').value;
-    const category = document.getElementById('category').value;
-    const amount = document.getElementById('amount').value;
-    const currency = document.getElementById('currency').value;
-    let expenseDate = document.getElementById('expenseDate').value;
-    const supermarket = document.getElementById('supermarket').value;
-    const supplier = document.getElementById('supplier').value;
-    let billStartDate = document.getElementById('billStartDate').value;
-    let billEndDate = document.getElementById('billEndDate').value;
-    
-    // DEBUG: Log tutti i valori letti
-    console.log('=== VALORI LETTI DAL FORM ===');
-    console.log('Categoria:', category);
-    console.log('Supermercato:', supermarket);
-    console.log('Supermercato display:', document.getElementById('supermarket').style.display);
-    console.log('Fornitore:', supplier);
-    console.log('Date bolletta:', billStartDate, billEndDate);
-    
-    if (!selectedPayer) {
-        alert('Seleziona chi ha pagato!');
-        return;
-    }
-    
-    if (!description || !category || !amount || !expenseDate) {
-        alert('Compila tutti i campi!');
-        return;
-    }
-    
-    if (category === 'Spesa' && !supermarket) {
-        alert('Seleziona il supermercato!');
-        return;
-    }
-    
-    if (category === 'Bollette') {
-        if (!supplier || !billStartDate || !billEndDate) {
-            alert('Compila tutti i campi della bolletta!');
-            return;
+        // Add expense
+        async function addExpense() {
+            const description = document.getElementById('description').value;
+            const category = document.getElementById('category').value;
+            const amount = document.getElementById('amount').value;
+            const currency = document.getElementById('currency').value;
+            let expenseDate = document.getElementById('expenseDate').value;
+            const supermarket = document.getElementById('supermarket').value;
+            
+            if (!selectedPayer) {
+                alert('Seleziona chi ha pagato!');
+                return;
+            }
+            
+            if (!description || !category || !amount || !expenseDate) {
+                alert('Compila tutti i campi!');
+                return;
+            }
+            
+            // Verifica che il supermercato sia selezionato se la categoria è Spesa
+            if (category === 'Spesa' && !supermarket) {
+                alert('Seleziona il supermercato!');
+                return;
+            }
+            
+            // Formatta la data se necessario
+            if (/^\d{8}$/.test(expenseDate)) {
+                const dd = expenseDate.substring(0, 2);
+                const mm = expenseDate.substring(2, 4);
+                const yyyy = expenseDate.substring(4, 8);
+                expenseDate = `${dd}/${mm}/${yyyy}`;
+            } else {
+                expenseDate = expenseDate.replace(/[.-]/g, '/');
+            }
+            
+            document.getElementById('addBtn').disabled = true;
+            updateSyncStatus('Salvataggio...', false);
+            
+            const expense = {
+                id: Date.now().toString(),
+                date: expenseDate,
+                payer: selectedPayer,
+                description: description,
+                category: category,
+                amount: parseFloat(amount),
+                currency: currency,
+                supermarket: supermarket || '',
+                action: 'add'
+            };
+            
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'text/plain',
+                    },
+                    body: JSON.stringify(expense)
+                });
+                
+                expenses.unshift(expense);
+                updateUI();
+                applyFilters();
+                
+                // Reset form
+                document.getElementById('description').value = '';
+                document.getElementById('category').value = '';
+                document.getElementById('amount').value = '';
+                document.getElementById('supermarket').value = '';
+                document.getElementById('supermarket').style.display = 'none';
+                selectedPayer = null;
+                document.querySelectorAll('.payer-btn').forEach(btn => btn.classList.remove('active'));
+                
+                setTodayDate();
+                
+                updateSyncStatus('✅ Aggiunto', false);
+                
+                setTimeout(loadExpenses, 1000);
+                
+            } catch (error) {
+                updateSyncStatus('❌ Errore', true);
+            } finally {
+                document.getElementById('addBtn').disabled = false;
+            }
         }
-    }
-    
-    // Formatta tutte le date
-    if (/^\d{8}$/.test(expenseDate)) {
-        const dd = expenseDate.substring(0, 2);
-        const mm = expenseDate.substring(2, 4);
-        const yyyy = expenseDate.substring(4, 8);
-        expenseDate = dd + '/' + mm + '/' + yyyy;
-    } else {
-        expenseDate = expenseDate.replace(/[.-]/g, '/');
-    }
-    
-    if (billStartDate) {
-        if (/^\d{8}$/.test(billStartDate)) {
-            const dd = billStartDate.substring(0, 2);
-            const mm = billStartDate.substring(2, 4);
-            const yyyy = billStartDate.substring(4, 8);
-            billStartDate = dd + '/' + mm + '/' + yyyy;
-        } else {
-            billStartDate = billStartDate.replace(/[.-]/g, '/');
-        }
-    }
-    
-    if (billEndDate) {
-        if (/^\d{8}$/.test(billEndDate)) {
-            const dd = billEndDate.substring(0, 2);
-            const mm = billEndDate.substring(2, 4);
-            const yyyy = billEndDate.substring(4, 8);
-            billEndDate = dd + '/' + mm + '/' + yyyy;
-        } else {
-            billEndDate = billEndDate.replace(/[.-]/g, '/');
-        }
-    }
-    
-    document.getElementById('addBtn').disabled = true;
-    updateSyncStatus('Salvataggio...', false);
-    
-    const expense = {
-        id: Date.now().toString(),
-        date: expenseDate,
-        payer: selectedPayer,
-        description: description,
-        category: category,
-        amount: parseFloat(amount),
-        currency: currency,
-        supermarket: supermarket || '',  // Assicurati che sia sempre una stringa
-        supplier: supplier || '',
-        billStartDate: billStartDate || '',
-        billEndDate: billEndDate || '',
-        action: 'add'
-    };
-    
-    // DEBUG: Log l'oggetto che stiamo per inviare
-    console.log('=== OGGETTO DA INVIARE ===');
-    console.log(JSON.stringify(expense, null, 2));
-    
-    // DEBUG: Verifica specificamente il campo supermarket
-    console.log('Campo supermarket nell\'oggetto:', expense.supermarket);
-    
-    try {
-        const bodyToSend = JSON.stringify(expense);
-        
-        // DEBUG: Log del body effettivo
-        console.log('=== BODY DELLA REQUEST ===');
-        console.log(bodyToSend);
-        
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: {
-                'Content-Type': 'text/plain',
-            },
-            body: bodyToSend
-        });
-        
-        // Nota: con mode: 'no-cors' non possiamo leggere la risposta
-        console.log('Request inviata con successo');
-        
-        expenses.unshift(expense);
-        updateUI();
-        applyFilters();
-        
-        // Reset form
-        document.getElementById('description').value = '';
-        document.getElementById('category').value = '';
-        document.getElementById('amount').value = '';
-        document.getElementById('supermarket').value = '';
-        document.getElementById('supermarket').style.display = 'none';
-        document.getElementById('supplier').value = '';
-        document.getElementById('billStartDate').value = '';
-        document.getElementById('billEndDate').value = '';
-        document.getElementById('billFields').style.display = 'none';
-        selectedPayer = null;
-        document.querySelectorAll('.payer-btn').forEach(btn => btn.classList.remove('active'));
-        
-        setTodayDate();
-        
-        updateSyncStatus('✅ Aggiunto', false);
-        
-        // DEBUG: Attendi prima di ricaricare per vedere i log
-        console.log('=== ATTESA PRIMA DEL RELOAD ===');
-        setTimeout(loadExpenses, 2000); // Aumentato a 2 secondi per debug
-        
-    } catch (error) {
-        console.error('ERRORE:', error);
-        updateSyncStatus('❌ Errore', true);
-    } finally {
-        document.getElementById('addBtn').disabled = false;
-    }
-}
 
         // Delete expense
         async function deleteExpense(id) {
@@ -1896,11 +1763,13 @@ async function addExpense() {
                 .filter(e => e.payer === 'Vale' && (!e.currency || e.currency === 'EUR'))
                 .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
             
+            // Update totals display
             document.getElementById('marcoTotal').textContent = 
                 marcoTotal % 1 === 0 ? marcoTotal.toFixed(0) : marcoTotal.toFixed(2);
             document.getElementById('valeTotal').textContent = 
                 valeTotal % 1 === 0 ? valeTotal.toFixed(0) : valeTotal.toFixed(2);
             
+            // Calculate and update balance
             const difference = Math.abs(marcoTotal - valeTotal) / 2;
             const balanceText = document.getElementById('balanceText');
             
@@ -1909,11 +1778,11 @@ async function addExpense() {
                 balanceText.style.color = '#4CAF50';
             } else if (marcoTotal > valeTotal) {
                 const diffDisplay = difference % 1 === 0 ? difference.toFixed(0) : difference.toFixed(2);
-                balanceText.textContent = 'Vale deve €' + diffDisplay;
+                balanceText.textContent = `Vale deve €${diffDisplay}`;
                 balanceText.style.color = '#ff9800';
             } else {
                 const diffDisplay = difference % 1 === 0 ? difference.toFixed(0) : difference.toFixed(2);
-                balanceText.textContent = 'Marco deve €' + diffDisplay;
+                balanceText.textContent = `Marco deve €${diffDisplay}`;
                 balanceText.style.color = '#ff9800';
             }
         }
