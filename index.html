@@ -177,6 +177,32 @@
             gap: 8px;
         }
 
+        .conditional-field {
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        .conditional-field.show {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .date-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
         .summary-card {
             background: #f8f8f8;
             border-radius: 10px;
@@ -274,17 +300,6 @@
 
         .collapsible-content.open {
             display: block;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .filter-grid {
@@ -442,7 +457,7 @@
             margin-bottom: 8px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             transition: all 0.2s ease;
         }
 
@@ -472,6 +487,13 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+
+        .expense-extra {
+            font-size: 10px;
+            color: #999;
+            margin-top: 2px;
+            font-style: italic;
         }
 
         .expense-amount {
@@ -610,7 +632,7 @@
                 <div class="expense-form">
                     <input type="text" id="description" placeholder="Cosa hai comprato?" required>
                     
-                    <select id="category" required onchange="toggleSupermarketField()">
+                    <select id="category" required onchange="toggleConditionalFields()">
                         <option value="" disabled selected>Seleziona categoria</option>
                         <option value="Spesa">🛒 Spesa</option>
                         <option value="Bollette">📄 Bollette</option>
@@ -622,17 +644,39 @@
                         <option value="Regali">🎁 Regali</option>
                     </select>
                     
+                    <!-- Campo condizionale: Supermercato (per categoria Spesa) -->
                     <select id="supermarket" style="display: none;">
                         <option value="" disabled selected>Seleziona supermercato</option>
                         <option value="Martinelli">🏪 Martinelli</option>
                         <option value="Esselunga">🛒 Esselunga</option>
                         <option value="Migross">🏬 Migross</option>
                         <option value="Aldi">🛍️ Aldi</option>
-                        <option value="Lidl">🔵 Lidl </option>
-                        <option value="Famila">ℹ️ Famila </option>
-                        <option value="Tosano">™️ Tosano </option>
+                        <option value="Lidl">🔵 Lidl</option>
+                        <option value="Famila">ℹ️ Famila</option>
+                        <option value="Tosano">™️ Tosano</option>
                         <option value="TooGoodToGo">📦 TooGoodToGo</option>
-                        <option value="Altro"> Altro</option>
+                        <option value="Altro">Altro</option>
+                    </select>
+                    
+                    <!-- Campi condizionali: Bollette -->
+                    <select id="supplier" style="display: none;">
+                        <option value="" disabled selected>Seleziona fornitore</option>
+                        <option value="AGSM">⚡ AGSM</option>
+                        <option value="Acque Veronesi">💧 Acque Veronesi</option>
+                        <option value="WiFi Vodafone">📶 WiFi Vodafone</option>
+                    </select>
+                    
+                    <div id="billDatesRow" class="date-row" style="display: none;">
+                        <input type="text" id="billStartDate" placeholder="Dal (GG/MM/AAAA)">
+                        <input type="text" id="billEndDate" placeholder="Al (GG/MM/AAAA)">
+                    </div>
+                    
+                    <!-- Campo condizionale: Sottocategoria Tempo Libero -->
+                    <select id="leisureSubcategory" style="display: none;">
+                        <option value="" disabled selected>Seleziona tipo</option>
+                        <option value="Cibo">🍔 Cibo</option>
+                        <option value="Autostrade">🛣️ Autostrade</option>
+                        <option value="Altro">📌 Altro</option>
                     </select>
                     
                     <input type="text" id="expenseDate" placeholder="Data (GG/MM/AAAA)" required>
@@ -904,18 +948,42 @@
             setTodayDate();
         };
 
-        // Toggle supermarket field visibility
-        function toggleSupermarketField() {
+        // Toggle conditional fields based on category
+        function toggleConditionalFields() {
             const category = document.getElementById('category').value;
             const supermarketField = document.getElementById('supermarket');
+            const supplierField = document.getElementById('supplier');
+            const billDatesRow = document.getElementById('billDatesRow');
+            const leisureSubcategoryField = document.getElementById('leisureSubcategory');
             
+            // Reset e nascondi tutti i campi condizionali
+            supermarketField.style.display = 'none';
+            supplierField.style.display = 'none';
+            billDatesRow.style.display = 'none';
+            leisureSubcategoryField.style.display = 'none';
+            
+            supermarketField.value = '';
+            supplierField.value = '';
+            document.getElementById('billStartDate').value = '';
+            document.getElementById('billEndDate').value = '';
+            leisureSubcategoryField.value = '';
+            
+            // Rimuovi required da tutti
+            supermarketField.required = false;
+            supplierField.required = false;
+            leisureSubcategoryField.required = false;
+            
+            // Mostra i campi appropriati in base alla categoria
             if (category === 'Spesa') {
                 supermarketField.style.display = 'block';
                 supermarketField.required = true;
-            } else {
-                supermarketField.style.display = 'none';
-                supermarketField.required = false;
-                supermarketField.value = '';
+            } else if (category === 'Bollette') {
+                supplierField.style.display = 'block';
+                billDatesRow.style.display = 'grid';
+                supplierField.required = true;
+            } else if (category === 'Tempo libero') {
+                leisureSubcategoryField.style.display = 'block';
+                leisureSubcategoryField.required = true;
             }
         }
 
@@ -982,27 +1050,47 @@
             const yearFilter = document.getElementById('yearFilter').value;
             const monthFilter = document.getElementById('monthFilter').value;
             
+            // Debug log
+            console.log('Applying filters - Year:', yearFilter, 'Month:', monthFilter);
+            console.log('Active categories:', Array.from(activeCategories));
+            console.log('Total expenses:', expenses.length);
+            
             filteredExpenses = expenses.filter(expense => {
+                // Controlla categoria
                 if (!activeCategories.has(expense.category)) {
                     return false;
                 }
                 
-                if (yearFilter) {
-                    const expenseYear = expense.date.split('/')[2];
-                    if (expenseYear !== yearFilter) {
+                // Controlla anno
+                if (yearFilter && yearFilter !== '') {
+                    const dateParts = expense.date.split('/');
+                    if (dateParts.length === 3) {
+                        const expenseYear = dateParts[2];
+                        if (expenseYear !== yearFilter) {
+                            return false;
+                        }
+                    } else {
                         return false;
                     }
                 }
                 
-                if (monthFilter) {
-                    const expenseMonth = expense.date.split('/')[1];
-                    if (expenseMonth !== monthFilter) {
+                // Controlla mese
+                if (monthFilter && monthFilter !== '') {
+                    const dateParts = expense.date.split('/');
+                    if (dateParts.length === 3) {
+                        const expenseMonth = dateParts[1];
+                        if (expenseMonth !== monthFilter) {
+                            return false;
+                        }
+                    } else {
                         return false;
                     }
                 }
                 
                 return true;
             });
+            
+            console.log('Filtered expenses:', filteredExpenses.length);
             
             updateFilteredUI();
             updateStats();
@@ -1512,6 +1600,27 @@
                 detailsDiv.appendChild(descDiv);
                 detailsDiv.appendChild(metaDiv);
                 
+                // Aggiungi info extra (Opzione B)
+                if (expense.supermarket || expense.supplier || expense.leisureSubcategory || 
+                    (expense.billStartDate && expense.billEndDate)) {
+                    const extraDiv = document.createElement('div');
+                    extraDiv.className = 'expense-extra';
+                    
+                    if (expense.supermarket) {
+                        extraDiv.textContent = expense.supermarket;
+                    } else if (expense.supplier) {
+                        let extraText = expense.supplier;
+                        if (expense.billStartDate && expense.billEndDate) {
+                            extraText += ` (${expense.billStartDate} - ${expense.billEndDate})`;
+                        }
+                        extraDiv.textContent = extraText;
+                    } else if (expense.leisureSubcategory) {
+                        extraDiv.textContent = expense.leisureSubcategory;
+                    }
+                    
+                    detailsDiv.appendChild(extraDiv);
+                }
+                
                 const actionsDiv = document.createElement('div');
                 actionsDiv.style.display = 'flex';
                 actionsDiv.style.alignItems = 'center';
@@ -1545,24 +1654,34 @@
             document.getElementById('expenseDate').value = `${dd}/${mm}/${yyyy}`;
         }
 
-        // Event listener per formattare la data
-        document.addEventListener('DOMContentLoaded', function() {
-            const dateInput = document.getElementById('expenseDate');
-            if (dateInput) {
-                dateInput.addEventListener('blur', function() {
-                    let formatted = this.value;
-                    
-                    if (/^\d{8}$/.test(formatted)) {
-                        const dd = formatted.substring(0, 2);
-                        const mm = formatted.substring(2, 4);
-                        const yyyy = formatted.substring(4, 8);
-                        this.value = `${dd}/${mm}/${yyyy}`;
-                    }
-                    else if (formatted.includes('.') || formatted.includes('-')) {
-                        this.value = formatted.replace(/[.-]/g, '/');
-                    }
-                });
+        // Formatta le date
+        function formatDateInput(inputId) {
+            const input = document.getElementById(inputId);
+            let formatted = input.value;
+            
+            if (/^\d{8}$/.test(formatted)) {
+                const dd = formatted.substring(0, 2);
+                const mm = formatted.substring(2, 4);
+                const yyyy = formatted.substring(4, 8);
+                input.value = `${dd}/${mm}/${yyyy}`;
             }
+            else if (formatted.includes('.') || formatted.includes('-')) {
+                input.value = formatted.replace(/[.-]/g, '/');
+            }
+        }
+
+        // Event listener per formattare le date
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateInputs = ['expenseDate', 'billStartDate', 'billEndDate'];
+            
+            dateInputs.forEach(inputId => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.addEventListener('blur', function() {
+                        formatDateInput(inputId);
+                    });
+                }
+            });
         });
 
         // Change configuration
@@ -1650,7 +1769,13 @@
             const amount = document.getElementById('amount').value;
             const currency = document.getElementById('currency').value;
             let expenseDate = document.getElementById('expenseDate').value;
+            
+            // Campi condizionali
             const supermarket = document.getElementById('supermarket').value;
+            const supplier = document.getElementById('supplier').value;
+            const billStartDate = document.getElementById('billStartDate').value;
+            const billEndDate = document.getElementById('billEndDate').value;
+            const leisureSubcategory = document.getElementById('leisureSubcategory').value;
             
             if (!selectedPayer) {
                 alert('Seleziona chi ha pagato!');
@@ -1662,9 +1787,19 @@
                 return;
             }
             
-            // Verifica che il supermercato sia selezionato se la categoria è Spesa
+            // Verifica campi condizionali obbligatori
             if (category === 'Spesa' && !supermarket) {
                 alert('Seleziona il supermercato!');
+                return;
+            }
+            
+            if (category === 'Bollette' && !supplier) {
+                alert('Seleziona il fornitore!');
+                return;
+            }
+            
+            if (category === 'Tempo libero' && !leisureSubcategory) {
+                alert('Seleziona il tipo di spesa!');
                 return;
             }
             
@@ -1690,6 +1825,10 @@
                 amount: parseFloat(amount),
                 currency: currency,
                 supermarket: supermarket || '',
+                supplier: supplier || '',
+                billStartDate: billStartDate || '',
+                billEndDate: billEndDate || '',
+                leisureSubcategory: leisureSubcategory || '',
                 action: 'add'
             };
             
@@ -1712,7 +1851,17 @@
                 document.getElementById('category').value = '';
                 document.getElementById('amount').value = '';
                 document.getElementById('supermarket').value = '';
+                document.getElementById('supplier').value = '';
+                document.getElementById('billStartDate').value = '';
+                document.getElementById('billEndDate').value = '';
+                document.getElementById('leisureSubcategory').value = '';
+                
+                // Nascondi campi condizionali
                 document.getElementById('supermarket').style.display = 'none';
+                document.getElementById('supplier').style.display = 'none';
+                document.getElementById('billDatesRow').style.display = 'none';
+                document.getElementById('leisureSubcategory').style.display = 'none';
+                
                 selectedPayer = null;
                 document.querySelectorAll('.payer-btn').forEach(btn => btn.classList.remove('active'));
                 
