@@ -445,7 +445,7 @@
         }
 
         .expense-list {
-            margin-top: 15px;
+            margin-top: 10px;
             max-height: 300px;
             overflow-y: auto;
         }
@@ -935,7 +935,8 @@
                 
                 <!-- Script URL Display -->
                 <div style="margin-top: 10px; padding: 8px; background: #f0f0f0; border-radius: 8px; font-size: 10px; color: #666; word-break: break-all;">
-                    <strong>Script URL:</strong> <span id="scriptUrlDisplay" style="font-family: monospace;"></span>
+                    <strong>Script URL:</strong> <span id="scriptUrlDisplay" style="font-family: monospace;">Caricamento...</span>
+                    <button onclick="testScriptUrl()" style="margin-left: 10px; padding: 4px 8px; font-size: 10px; background: #2196F3;">TEST</button>
                 </div>
             </div>
         </div>
@@ -959,6 +960,14 @@
                 document.getElementById('scriptUrl').value = SCRIPT_URL;
                 document.getElementById('setupNotice').style.display = 'none';
                 document.getElementById('mainApp').style.display = 'block';
+                
+                // Mostra l'URL dello script in uso - con fallback
+                const urlDisplay = document.getElementById('scriptUrlDisplay');
+                if (urlDisplay) {
+                    urlDisplay.textContent = SCRIPT_URL || 'Non configurato';
+                    console.log('Script URL in uso:', SCRIPT_URL);
+                }
+                
                 loadExpenses();
             }
             
@@ -1807,6 +1816,9 @@
             document.getElementById('setupNotice').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
             
+            // Mostra l'URL dello script in uso
+            document.getElementById('scriptUrlDisplay').textContent = SCRIPT_URL;
+            
             loadExpenses();
         }
 
@@ -1835,6 +1847,12 @@
         // Load expenses
         function loadExpenses() {
             if (!SCRIPT_URL) return;
+            
+            // Aggiorna display URL ogni volta che carica
+            const urlDisplay = document.getElementById('scriptUrlDisplay');
+            if (urlDisplay) {
+                urlDisplay.textContent = SCRIPT_URL;
+            }
             
             updateSyncStatus('Caricamento...', false);
             
@@ -2069,6 +2087,20 @@
             const statusEl = document.getElementById('syncStatus');
             statusEl.textContent = message;
             statusEl.className = isError ? 'sync-status error' : 'sync-status';
+        }
+
+        // Test Script URL
+        function testScriptUrl() {
+            if (!SCRIPT_URL) {
+                alert('Nessun URL configurato!');
+                return;
+            }
+            
+            console.log('Testing Script URL:', SCRIPT_URL);
+            
+            // Apri in una nuova finestra per testare
+            const testUrl = SCRIPT_URL + '?test=1';
+            window.open(testUrl, '_blank');
         }
 
         // Auto-refresh ogni 60 secondi
