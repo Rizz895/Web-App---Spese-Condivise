@@ -1111,13 +1111,23 @@
             
             let daysInPeriod = 30;
             if (filteredExpenses.length > 0) {
-                const dates = filteredExpenses.map(e => {
-                    const parts = e.date.split('/');
-                    return new Date(parts[2], parts[1] - 1, parts[0]);
-                });
-                const minDate = new Date(Math.min(...dates));
-                const maxDate = new Date(Math.max(...dates));
-                daysInPeriod = Math.max(1, Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24)) + 1);
+                // Filtra solo le spese con date valide per il calcolo del periodo
+                const validDates = filteredExpenses
+                    .filter(e => e.date && typeof e.date === 'string' && e.date !== '?' && e.date.includes('/'))
+                    .map(e => {
+                        const parts = e.date.split('/');
+                        if (parts.length === 3) {
+                            return new Date(parts[2], parts[1] - 1, parts[0]);
+                        }
+                        return null;
+                    })
+                    .filter(date => date && !isNaN(date));
+                
+                if (validDates.length > 0) {
+                    const minDate = new Date(Math.min(...validDates));
+                    const maxDate = new Date(Math.max(...validDates));
+                    daysInPeriod = Math.max(1, Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24)) + 1);
+                }
             }
             
             const dailyAvg = totalFiltered / daysInPeriod;
@@ -1241,7 +1251,15 @@
             const timeData = {};
             filteredExpenses.forEach(expense => {
                 if (!expense.currency || expense.currency === 'EUR') {
+                    // Salta le spese con date non valide
+                    if (!expense.date || typeof expense.date !== 'string' || 
+                        expense.date === '?' || !expense.date.includes('/')) {
+                        return;
+                    }
+                    
                     const parts = expense.date.split('/');
+                    if (parts.length !== 3) return;
+                    
                     let key;
                     
                     if (granularity === 'daily') {
@@ -1256,13 +1274,17 @@
             
             // Ordina le chiavi cronologicamente
             const sortedKeys = Object.keys(timeData).sort((a, b) => {
-                const dateA = granularity === 'daily' 
-                    ? new Date(a.split('/').reverse().join('-'))
-                    : new Date(a.split('/').reverse().join('-') + '-01');
-                const dateB = granularity === 'daily'
-                    ? new Date(b.split('/').reverse().join('-'))
-                    : new Date(b.split('/').reverse().join('-') + '-01');
-                return dateA - dateB;
+                try {
+                    const dateA = granularity === 'daily' 
+                        ? new Date(a.split('/').reverse().join('-'))
+                        : new Date(a.split('/').reverse().join('-') + '-01');
+                    const dateB = granularity === 'daily'
+                        ? new Date(b.split('/').reverse().join('-'))
+                        : new Date(b.split('/').reverse().join('-') + '-01');
+                    return dateA - dateB;
+                } catch (error) {
+                    return 0;
+                }
             });
             
             const labels = sortedKeys;
@@ -1337,14 +1359,22 @@
             
             // Filtra i dati per i due periodi
             const period1Expenses = expenses.filter(e => {
+                if (!e.date || typeof e.date !== 'string' || e.date === '?' || !e.date.includes('/')) {
+                    return false;
+                }
                 const parts = e.date.split('/');
+                if (parts.length !== 3) return false;
                 if (parts[2] !== year1) return false;
                 if (month1 && month1 !== 'all' && parts[1] !== month1) return false;
                 return true;
             });
             
             const period2Expenses = expenses.filter(e => {
+                if (!e.date || typeof e.date !== 'string' || e.date === '?' || !e.date.includes('/')) {
+                    return false;
+                }
                 const parts = e.date.split('/');
+                if (parts.length !== 3) return false;
                 if (parts[2] !== year2) return false;
                 if (month2 && month2 !== 'all' && parts[1] !== month2) return false;
                 return true;
