@@ -755,6 +755,11 @@
                                 </select>
                             </div>
                         </div>
+                        
+                        <!-- Pulsante Applica Filtri -->
+                        <button onclick="applyFilters()" style="width: 100%; margin-top: 8px; margin-bottom: 12px; background: #4CAF50;">
+                            🔍 APPLICA FILTRI
+                        </button>
 
                         <!-- Filtri categoria -->
                         <h3>Categorie</h3>
@@ -1744,6 +1749,28 @@
             loadExpenses();
         }
 
+        // Debug function to check date formats
+        function debugDates() {
+            console.log('=== DEBUG DATE FORMATS ===');
+            const sampleDates = expenses.slice(0, 10).map(e => ({
+                date: e.date,
+                category: e.category,
+                amount: e.amount,
+                description: e.description
+            }));
+            console.table(sampleDates);
+            
+            // Conta spese per mese in formato numerico
+            const monthCounts = {};
+            expenses.forEach(e => {
+                if (e.date && e.date.includes('/')) {
+                    const month = e.date.split('/')[1];
+                    monthCounts[month] = (monthCounts[month] || 0) + 1;
+                }
+            });
+            console.log('Month formats in database:', monthCounts);
+        }
+
         // Load expenses
         function loadExpenses() {
             if (!SCRIPT_URL) return;
@@ -1756,6 +1783,12 @@
                 if (result.success) {
                     expenses = result.data || [];
                     filteredExpenses = [...expenses];
+                    
+                    // Debug: mostra formato date
+                    if (expenses.length > 0) {
+                        debugDates();
+                    }
+                    
                     updateUI();
                     applyFilters();
                     updateSyncStatus('✅ Sincronizzato', false);
