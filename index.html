@@ -954,6 +954,15 @@
         let comparisonChart = null;
         let currentComparisonType = 'bar';
 
+        // Mostra subito l'URL se disponibile
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlDisplay = document.getElementById('scriptUrlDisplay');
+            if (urlDisplay && SCRIPT_URL) {
+                urlDisplay.textContent = SCRIPT_URL;
+                console.log('URL Display inizializzato:', SCRIPT_URL);
+            }
+        });
+
         // Check if already configured
         window.onload = function() {
             if (SCRIPT_URL) {
