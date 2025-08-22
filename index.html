@@ -908,10 +908,18 @@
                 </div>
 
                 <!-- Expense List -->
-                <h2>📋 Ultime Spese <span id="filteredCount" style="font-size: 12px; color: #999;"></span></h2>
-                <div class="expense-list">
-                    <div id="expensesList">
-                        <div class="no-data-message">Caricamento...</div>
+                <div class="analytics-section">
+                    <div class="section-header" onclick="toggleSection('expenses')">
+                        <h2>📋 Ultime Spese <span id="filteredCount" style="font-size: 12px; color: #999;"></span></h2>
+                        <span class="toggle-icon" id="expensesToggle">▼</span>
+                    </div>
+                    
+                    <div id="expensesContent" class="collapsible-content open">
+                        <div class="expense-list">
+                            <div id="expensesList">
+                                <div class="no-data-message">Caricamento...</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -923,6 +931,11 @@
                 <div class="action-buttons">
                     <button class="refresh-btn" onclick="loadExpenses()">🔄 AGGIORNA</button>
                     <button class="config-btn" onclick="changeConfig()">⚙️ CONFIG</button>
+                </div>
+                
+                <!-- Script URL Display -->
+                <div style="margin-top: 10px; padding: 8px; background: #f0f0f0; border-radius: 8px; font-size: 10px; color: #666; word-break: break-all;">
+                    <strong>Script URL:</strong> <span id="scriptUrlDisplay" style="font-family: monospace;"></span>
                 </div>
             </div>
         </div>
