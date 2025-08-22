@@ -1102,6 +1102,60 @@
             updateChart();
         }
 
+        // Helper function to parse date from various formats
+        function parseDateFromExpense(expense) {
+            if (!expense.date) return null;
+            
+            const dateStr = expense.date.toString();
+            
+            if (dateStr === '?') return null;
+            
+            // Formato ISO con timestamp: '2025-08-17T22:00:00'
+            if (dateStr.includes('T')) {
+                return new Date(dateStr);
+            }
+            
+            // Formato italiano: 'GG/MM/AAAA'
+            if (dateStr.includes('/')) {
+                const parts = dateStr.split('/');
+                if (parts.length === 3) {
+                    return new Date(parts[2], parts[1] - 1, parts[0]);
+                }
+            }
+            
+            // Formato ISO semplice: 'YYYY-MM-DD'
+            if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                return new Date(dateStr);
+            }
+            
+            return null;
+        }
+        
+        // Helper function to format date for display
+        function formatDateForDisplay(expense) {
+            if (!expense.date) return '?';
+            
+            const dateStr = expense.date.toString();
+            
+            if (dateStr === '?') return '?';
+            
+            // Se è già in formato italiano, restituiscilo
+            if (dateStr.includes('/') && !dateStr.includes('T')) {
+                return dateStr;
+            }
+            
+            // Altrimenti, converti dal formato ISO
+            const date = parseDateFromExpense(expense);
+            if (date && !isNaN(date)) {
+                const dd = String(date.getDate()).padStart(2, '0');
+                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                const yyyy = date.getFullYear();
+                return `${dd}/${mm}/${yyyy}`;
+            }
+            
+            return dateStr;
+        }
+
         // Update statistics
         function updateStats() {
             const marcoFiltered = filteredExpenses
@@ -1118,14 +1172,7 @@
             if (filteredExpenses.length > 0) {
                 // Filtra solo le spese con date valide per il calcolo del periodo
                 const validDates = filteredExpenses
-                    .filter(e => e.date && typeof e.date === 'string' && e.date !== '?' && e.date.includes('/'))
-                    .map(e => {
-                        const parts = e.date.split('/');
-                        if (parts.length === 3) {
-                            return new Date(parts[2], parts[1] - 1, parts[0]);
-                        }
-                        return null;
-                    })
+                    .map(e => parseDateFromExpense(e))
                     .filter(date => date && !isNaN(date));
                 
                 if (validDates.length > 0) {
@@ -1630,7 +1677,8 @@
                 const metaDiv = document.createElement('div');
                 metaDiv.className = 'expense-meta';
                 const payerIcon = expense.payer === 'Marco' ? '👨' : '👩';
-                metaDiv.textContent = `${payerIcon} ${expense.category} • ${expense.date}`;
+                const displayDate = formatDateForDisplay(expense);
+                metaDiv.textContent = `${payerIcon} ${expense.category} • ${displayDate}`;
                 
                 detailsDiv.appendChild(descDiv);
                 detailsDiv.appendChild(metaDiv);
