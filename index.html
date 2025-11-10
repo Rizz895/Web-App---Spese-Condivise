@@ -1074,16 +1074,15 @@
             loadExpenses();
         }
 
-        // Load expenses
-        async function loadExpenses() {
+        // Load expenses (con JSONP per aggirare CORS)
+        function loadExpenses() {
             if (!SCRIPT_URL) return;
             
             updateSyncStatus('Caricamento...', false);
             
-            try {
-                const response = await fetch(SCRIPT_URL);
-                const result = await response.json();
-                
+            const callbackName = 'callback_' + Math.floor(Math.random() * 1000000);
+            
+            window[callbackName] = function(result) {
                 if (result.success) {
                     expenses = result.data || [];
                     updateAllStats();
@@ -1092,11 +1091,25 @@
                     updateSyncStatus('✅ Sincronizzato', false);
                 } else {
                     updateSyncStatus('❌ Errore', true);
+                    console.error('Errore dal server:', result);
                 }
-            } catch (error) {
-                console.error('Errore caricamento:', error);
+                
+                delete window[callbackName];
+                const script = document.getElementById(callbackName);
+                if (script) script.remove();
+            };
+            
+            const script = document.createElement('script');
+            script.id = callbackName;
+            script.src = SCRIPT_URL + '?callback=' + callbackName;
+            script.onerror = function() {
                 updateSyncStatus('❌ Errore connessione', true);
-            }
+                console.error('Impossibile contattare il server');
+                delete window[callbackName];
+                if (script) script.remove();
+            };
+            
+            document.body.appendChild(script);
         }
 
         // Add expense
@@ -1266,18 +1279,18 @@
             const valePersonalCount = expenses
                 .filter(e => e.expenseType === 'Personale' && e.payer === 'Vale' && (!e.currency || e.currency === 'EUR')).length;
             
-            // Overview tab
-            const marcoTotal = marcoShared + marcoPersonal;
-            const valeTotal = valeShared + valePersonal;
-            const sharedTotal = marcoShared + valeShared + bothShared;
-            const personalTotal = marcoPersonal + valePersonal;
+            // NUOVA LOGICA: Overview tab
+            // Marco Tot. Condiviso = spese condivise pagate da Marco + metà delle spese "Entrambi"
+            const marcoSharedTotal = marcoShared + (bothShared / 2);
+            const valeSharedTotal = valeShared + (bothShared / 2);
             
-            document.getElementById('marcoTotalGeneral').textContent = format(marcoTotal);
-            document.getElementById('valeTotalGeneral').textContent = format(valeTotal);
-            document.getElementById('sharedTotal').textContent = format(sharedTotal);
-            document.getElementById('personalTotal').textContent = format(personalTotal);
+            document.getElementById('marcoSharedTotal').textContent = format(marcoSharedTotal);
+            document.getElementById('valeSharedTotal').textContent = format(valeSharedTotal);
+            document.getElementById('marcoPersonalOverview').textContent = format(marcoPersonal);
+            document.getElementById('valePersonalOverview').textContent = format(valePersonal);
             
             // Shared tab
+            const sharedTotal = marcoShared + valeShared + bothShared;
             document.getElementById('marcoShared').textContent = format(marcoShared);
             document.getElementById('valeShared').textContent = format(valeShared);
             document.getElementById('bothShared').textContent = format(bothShared);
